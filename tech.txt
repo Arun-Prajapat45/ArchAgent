@@ -1,0 +1,109 @@
+arch-agent/
+├── data/
+│   ├── raw/                    # Scraped markdown files from the 2 GitHub repos
+│   └── chroma_db/              # Local vector database storage
+├── src/
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── classifier.py       # Requirement Classifier Agent logic
+│   │   ├── architect.py        # System Architect Agent logic
+│   │   ├── diagrammer.py       # Mermaid.js Generator logic
+│   │   └── auditor.py          # Dual Auditor (Logic & Visual) logic
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── graph.py            # LangGraph StateMachine definition
+│   │   ├── state.py            # Shared AgentState TypedDict
+│   │   └── rag_engine.py       # Retrieval logic (ChromaDB + OpenAI/Claude)
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   ├── capacity_tool.py    # Python logic for RPS/Bandwidth math
+│   │   └── storage_tool.py     # Python logic for DB size math
+│   └── utils/
+│       ├── validator.py        # Mermaid syntax linter
+│       └── prompts.py          # Centralized "System Prompts" for all agents
+├── ui/
+│   └── app.py                  # Streamlit frontend code
+├── .env                        # API Keys (OPENAI_API_KEY, etc.)
+├── langgraph.json              # Configuration for LangGraph orchestration
+├── requirements.txt            # Project dependencies
+└── README.md                   # Documentation & Architecture breakdown
+
+
+
+
+
+The "Vague Input" Loop: Users often give bad prompts (e.g., "Make me a YouTube").
+
+Solution: The Requirement Engine must have a "Clarity Gate." If the confidence score of the extracted requirements is low, the agent should stop and ask the user questions instead of guessing.
+
+
+
+
+
+
+
+Phase 1: The Design Doc (The Logic)
+User Input: You type in what you want to build.
+
+Requirement Classifier:
+
+Calls Tools: Calculates numbers (RPS, storage size).
+
+RAG: Looks at real-world examples (e.g., Netflix, Uber) to find similar cases.
+
+Output: Creates a list of "Tags" (like High-Traffic or Database-Heavy).
+
+System Architect:
+
+RAG: Uses the tags to find the best tools (like Kafka, Redis, or SQL) from a scalability library.
+
+Output: Writes a detailed text document explaining the design.
+
+Logic Auditor: Reads the document. If it finds a mistake, it sends it back to the Architect to fix.
+
+Here is the simplified flow of your project, broken down into the "Thinking" phase and the "Drawing" phase.
+
+Phase 1: The Design Doc (The Logic)
+User Input: You type in what you want to build.
+
+Requirement Classifier:
+
+Calls Tools: Calculates numbers (RPS, storage size).
+
+RAG: Looks at real-world examples (e.g., Netflix, Uber) to find similar cases.
+
+Output: Creates a list of "Tags" (like High-Traffic or Database-Heavy).
+
+System Architect:
+
+RAG: Uses the tags to find the best tools (like Kafka, Redis, or SQL) from a scalability library.
+
+Output: Writes a detailed text document explaining the design.
+
+Logic Auditor: Reads the document. If it finds a mistake, it sends it back to the Architect to fix.
+
+Phase 2: The Diagram (The Visual)
+Diagram Agent: * Takes the approved text document.
+
+RAG: Uses pre-made code snippets to ensure the diagram looks professional.
+
+Output: Generates Mermaid.js code.
+
+Diagram Verifier: * Checks if the code is broken. If it is, the AI fixes the code automatically.
+
+Visual Auditor: * Makes sure the final drawing actually matches what was written in the text document.
+
+Final Output: The user sees a perfect High-Level Design (HLD) and a professional diagram.
+
+
+
+
+
+Who is going to use it?
+How are they going to use it?
+How many users are there?
+What does the system do?
+What are the inputs and outputs of the system?
+How much data do we expect to handle?
+How many requests per second do we expect?
+What is the expected read to write ratio?

@@ -1,0 +1,8 @@
+.env
+req.txt
+*.json
+*.zip
+awesome-scalability-master/
+distributed-system-design-master/
+from perplexity/
+__pycache__
