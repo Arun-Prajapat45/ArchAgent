@@ -89,100 +89,100 @@ load_dotenv()
 
 
 
-class RequirementsRAG:
-    def __init__(
-        self,
-        raw_data_dir: Path,
-        vectorstore_path: str,
-        requirement_model,
-        requirements_prompt,
-        chunk_size: int = 500,
-        chunk_overlap: int = 50,
-        file_name:str="requirements.txt",
-        k: int = 5,
-    ):
-        self.file_name=file_name
-        self.raw_data_dir = raw_data_dir
-        self.vectorstore_path = vectorstore_path
-        self.requirement_model = requirement_model
-        self.requirements_prompt = requirements_prompt
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.k = k
+# class RequirementsRAG:
+#     def __init__(
+#         self,
+#         raw_data_dir: Path,
+#         vectorstore_path: str,
+#         requirement_model,
+#         requirements_prompt,
+#         chunk_size: int = 500,
+#         chunk_overlap: int = 50,
+#         file_name:str="requirements2.txt",
+#         k: int = 5,
+#     ):
+#         self.file_name=file_name
+#         self.raw_data_dir = raw_data_dir
+#         self.vectorstore_path = vectorstore_path
+#         self.requirement_model = requirement_model
+#         self.requirements_prompt = requirements_prompt
+#         self.chunk_size = chunk_size
+#         self.chunk_overlap = chunk_overlap
+#         self.k = k
 
-        self.embeddings = self._init_embeddings()
-        self.vectorstore = self._init_vectorstore()
-        self.llm = self._init_llm()
-        self.retriever = self.vectorstore.as_retriever(
-            search_kwargs={"k": self.k}
-        )
-        self.qa_chain = self._init_qa_chain()
-        self.parser = JsonOutputParser(
-            pydantic_object=self.requirement_model
-        )
+#         self.embeddings = self._init_embeddings()
+#         self.vectorstore = self._init_vectorstore()
+#         self.llm = self._init_llm()
+#         self.retriever = self.vectorstore.as_retriever(
+#             search_kwargs={"k": self.k}
+#         )
+#         self.qa_chain = self._init_qa_chain()
+#         self.parser = JsonOutputParser(
+#             pydantic_object=self.requirement_model
+#         )
 
-    def _init_embeddings(self):
-        return OpenAIEmbeddings(
-            api_key=os.getenv("LLM_KEY"),
-            base_url="https://openrouter.ai/api/v1",
-            model="text-embedding-ada-002",
-        )
+#     def _init_embeddings(self):
+#         return OpenAIEmbeddings(
+#             api_key=os.getenv("LLM_KEY"),
+#             base_url="https://openrouter.ai/api/v1",
+#             model="text-embedding-ada-002",
+#         )
 
-    def _load_and_split_docs(self):
-        loader = TextLoader(str(self.raw_data_dir /self.file_name ))
-        documents = loader.load()
+#     def _load_and_split_docs(self):
+#         loader = TextLoader(str(self.raw_data_dir /self.file_name ))
+#         documents = loader.load()
 
-        splitter = CharacterTextSplitter(
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
-        )
-        docs = splitter.split_documents(documents)
-        print(f"Loaded {len(docs)} document chunks.")
-        return docs
+#         splitter = CharacterTextSplitter(
+#             chunk_size=self.chunk_size,
+#             chunk_overlap=self.chunk_overlap,
+#         )
+#         docs = splitter.split_documents(documents)
+#         print(f"Loaded {len(docs)} document chunks.")
+#         return docs
 
-    def _init_vectorstore(self):
-        if os.path.exists(self.vectorstore_path):
-            print("Loading vector store from disk...")
-            return FAISS.load_local(
-                self.vectorstore_path,
-                self.embeddings,
-                allow_dangerous_deserialization=True,
-            )
+#     def _init_vectorstore(self):
+#         if os.path.exists(self.vectorstore_path):
+#             print("Loading vector store from disk...")
+#             return FAISS.load_local(
+#                 self.vectorstore_path,
+#                 self.embeddings,
+#                 allow_dangerous_deserialization=True,
+#             )
 
-        print("Creating new vector store...")
-        docs = self._load_and_split_docs()
-        vectorstore = FAISS.from_documents(docs, self.embeddings)
-        vectorstore.save_local(self.vectorstore_path)
-        print("Vector store saved to disk.")
-        return vectorstore
+#         print("Creating new vector store...")
+#         docs = self._load_and_split_docs()
+#         vectorstore = FAISS.from_documents(docs, self.embeddings)
+#         vectorstore.save_local(self.vectorstore_path)
+#         print("Vector store saved to disk.")
+#         return vectorstore
 
-    def _init_llm(self):
-        return ChatOpenAI(
-            model="deepseek/deepseek-chat",
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("LLM_KEY"),
-            temperature=0.3,
-            max_tokens=1024,
-        )
+#     def _init_llm(self):
+#         return ChatOpenAI(
+#             model="deepseek/deepseek-chat",
+#             base_url="https://openrouter.ai/api/v1",
+#             api_key=os.getenv("LLM_KEY"),
+#             temperature=0.3,
+#             max_tokens=1024,
+#         )
 
-    def _init_qa_chain(self):
-        return RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=self.retriever,
-        )
+#     def _init_qa_chain(self):
+#         return RetrievalQA.from_chain_type(
+#             llm=self.llm,
+#             chain_type="stuff",
+#             retriever=self.retriever,
+#         )
 
-    def generate_requirements(self, user_input: str):
-        prompt = self.requirements_prompt.format(query=user_input)
-        print("generating requirements...")
-        result = self.qa_chain.invoke(prompt)
+#     def generate_requirements(self, user_input: str):
+#         prompt = self.requirements_prompt.format(query=user_input)
+#         print("generating requirements...")
+#         result = self.qa_chain.invoke(prompt)
 
-        try:
-            return self.parser.parse(result["result"])
-        except Exception as e:
-            raise ValueError(
-                f"Failed to parse JSON output.\nRaw output:\n{result['result']}"
-            ) from e
+#         try:
+#             return self.parser.parse(result["result"])
+#         except Exception as e:
+#             raise ValueError(
+#                 f"Failed to parse JSON output.\nRaw output:\n{result['result']}"
+#             ) from e
 
 
 # rag = RequirementsRAG(
@@ -197,3 +197,132 @@ class RequirementsRAG:
 # )
 
 # print(response)
+
+
+
+
+
+
+
+
+#################################################################################################################################################
+
+
+
+
+
+import os
+from pathlib import Path
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain.retrievers import ParentDocumentRetriever
+from langchain.storage import InMemoryStore
+from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
+from langchain.chains import RetrievalQA
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_community.document_loaders import TextLoader
+
+class RequirementsRAG:
+    def __init__(
+        self,
+        raw_data_dir: Path,
+        vectorstore_path: str,
+        requirement_model,
+        requirements_prompt,
+        file_name: str = "requirements2.txt",
+        k: int = 5,
+    ):
+        self.file_name = file_name
+        self.raw_data_dir = raw_data_dir
+        self.vectorstore_path = vectorstore_path
+        self.requirement_model = requirement_model
+        self.requirements_prompt = requirements_prompt
+        self.k = k
+
+        # 1. Initialize core components
+        self.embeddings = self._init_embeddings()
+        self.llm = self._init_llm()
+        self.parser = JsonOutputParser(pydantic_object=self.requirement_model)
+        
+        # 2. Setup Splitters
+        self.header_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=[("#", "Archetype")])
+        self.child_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
+        
+        # 3. Initialize specialized Parent-Child components
+        self.store = InMemoryStore()
+        # Initialize an empty or existing vectorstore
+        self.vectorstore = self._init_vectorstore_base()
+        
+        # 4. Initialize specialized Retriever
+        self.retriever = ParentDocumentRetriever(
+            vectorstore=self.vectorstore,
+            docstore=self.store,
+            child_splitter=self.child_splitter,
+            search_kwargs={"k": self.k}
+        )
+
+        # 5. Ingest data (This builds the Parent-Child mapping)
+        self._ingest_data()
+
+        # 6. Final Chain setup
+        self.qa_chain = self._init_qa_chain()
+
+    def _init_embeddings(self):
+        return OpenAIEmbeddings(
+            api_key=os.getenv("LLM_KEY"),
+            base_url="https://openrouter.ai/api/v1",
+            model="text-embedding-ada-002",
+        )
+
+    def _init_llm(self):
+        return ChatOpenAI(
+            model="deepseek/deepseek-chat",
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("LLM_KEY"),
+            temperature=0.3,
+            max_tokens=1024,
+        )
+
+    def _init_vectorstore_base(self):
+        """Initializes a blank vectorstore to be managed by the ParentDocumentRetriever."""
+        # FAISS needs at least one document to initialize if loading is not an option
+        return FAISS.from_texts(["initialization"], self.embeddings)
+
+    def _ingest_data(self):
+        """Handles the manual parent-child ingestion logic."""
+        file_path = self.raw_data_dir / self.file_name
+        print(f"Ingesting data from {file_path}...")
+        
+        with open(file_path, "r", encoding="utf-8") as f:
+            raw_text = f.read()
+
+        # Split into parent documents based on Markdown headers
+        parent_docs = self.header_splitter.split_text(raw_text)
+        
+        # This creates the child chunks and maps them to parents in self.store
+        self.retriever.add_documents(parent_docs, ids=None)
+        print(f"Successfully indexed {len(parent_docs)} archetypes.")
+
+    def _init_qa_chain(self):
+        return RetrievalQA.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=self.retriever,
+            return_source_documents=True 
+        )
+
+    def generate_requirements(self, user_input: str):
+        # We format the prompt with the query
+        formatted_prompt = self.requirements_prompt.format(query=user_input)
+        print("Generating requirements via Parent-Child RAG...")
+        
+        # RetrievalQA handles the context injection from our specialized retriever
+        result = self.qa_chain.invoke(formatted_prompt)
+
+        try:
+            # result["result"] contains the LLM output string
+            return self.parser.parse(result["result"])
+        except Exception as e:
+            raise ValueError(
+                f"Failed to parse JSON output.\nRaw output:\n{result['result']}"
+            ) from e

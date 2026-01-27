@@ -23,7 +23,7 @@ class RequirementsState(TypedDict):
 def _init(state: RequirementsState):
     state['model']=RequirementsRAG(
         raw_data_dir=RAW_DATA_DIR,
-        vectorstore_path="../../data/db/faiss_index_requirements",
+        vectorstore_path="../../data/db/faiss_index_requirements_x",
         requirement_model=RequirementModel,
         requirements_prompt=RequirementsQuery,
     )
@@ -45,11 +45,11 @@ def requirementBuilder():
     return workflow.compile()
 
 
-intial_state:RequirementsState={
-    "user_input":"i want to create a social media application, with feeds, posts, likes and messages and payment system integrated!"
-}
+# intial_state:RequirementsState={
+#     "user_input":"i want to create a social media application, with feeds, posts, likes and messages and payment system integrated!"
+# }
 
-graph=requirementBuilder()
-final_state=graph.invoke(intial_state)
+# graph=requirementBuilder()
+# final_state=graph.invoke(intial_state)
 
-print(final_state['output_model'])
+# print(final_state['output_model'])

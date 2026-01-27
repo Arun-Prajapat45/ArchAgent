@@ -264,6 +264,8 @@ Instructions:
 - Sync: Ensure the `connectivity_matrices` reflect any new infrastructure added to fix bottlenecks.
 - Consistency: If the critic flags data integrity, update `data_management` logic while keeping the underlying services.
 - If the critic suggests a new component (e.g., a Load Balancer or Cache), update ALL three sections: `tech_stack`, `request_flows`, and `connectivity_matrices`.
+- Make sure no components are left alone/unconnected or the system has unconnected components in the 'connectivity_matrices'
+- Make sure you differenciate between adminsistrator, user and other external systems/users
 
 JSON Schema Requirement: 
 Your output must follow the exact structure below. 

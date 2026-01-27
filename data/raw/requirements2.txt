@@ -1,0 +1,159 @@
+# ARCHETYPE: HEAVY COMPUTE & HPC
+**Metadata**: { "id": "arch_01", "type": "batch-parallel", "read_write": "bursty-io", "latency_sensitivity": "low" }
+**Summary**: Systems for batch-oriented, parallel workloads like render farms, ML training, and genomics.
+**Technical Specs**:
+* Concurrency: Low (hundreds of workers)
+* IO Pattern: Large file I/O, multi-GB bursty reads, continuous checkpoint writes
+* Tech Stack: High-bandwidth networks, Parallel file systems (Lustre, GPFS), Job schedulers
+* Metrics: Throughput and correctness over latency
+---
+
+# ARCHETYPE: REAL-TIME INTERACTIVE
+**Metadata**: { "id": "arch_02", "type": "low-latency", "read_write": "50:50", "latency_sensitivity": "critical" }
+**Summary**: Bidirectional, stateful systems for games, chat, and collaboration tools.
+**Technical Specs**:
+* Concurrency: High (100k+ concurrent users)
+* IO Pattern: Frequent small messages, stateful connections
+* Tech Stack: WebSockets, gRPC, In-memory DBs, Pub-Sub
+* Metrics: <50ms end-to-end latency, low jitter
+---
+
+# ARCHETYPE: CONTENT DELIVERY & STREAMING
+**Metadata**: { "id": "arch_03", "type": "read-heavy", "read_write": "99:1", "latency_sensitivity": "medium" }
+**Summary**: Large-scale distribution for video-on-demand and podcasting.
+**Technical Specs**:
+* Concurrency: Tens of millions of users
+* IO Pattern: Large static media reads, ingestion-only writes
+* Tech Stack: Object storage, multi-tier CDNs, Adaptive bitrate streaming
+* Metrics: Terabits per second aggregate throughput
+---
+
+# ARCHETYPE: AD-TECH & HIGH-THROUGHPUT ANALYTICS
+**Metadata**: { "id": "arch_04", "type": "write-heavy", "read_write": "10:90", "latency_sensitivity": "critical" }
+**Summary**: Ultra-low latency ingestion for machine-to-machine events and real-time bidding.
+**Technical Specs**:
+* Concurrency: Billions of events per day
+* IO Pattern: Compressed small payloads, high-velocity ingestion
+* Tech Stack: Kafka, Pulsar, ClickHouse, Druid
+* Metrics: p99 ingestion <10ms
+---
+
+# ARCHETYPE: IOT TELEMETRY & SENSORS
+**Metadata**: { "id": "arch_05", "type": "write-heavy", "read_write": "5:95", "latency_sensitivity": "low" }
+**Summary**: High-volume ingestion from millions of distributed devices with unreliable connectivity.
+**Technical Specs**:
+* Concurrency: Millions of connected devices
+* IO Pattern: Small payloads at regular intervals, bursty connectivity
+* Tech Stack: MQTT, AMQP brokers, Time-series databases
+* Metrics: High ingestion reliability, backpressure handling
+---
+
+# ARCHETYPE: SEARCH & DISCOVERY
+**Metadata**: { "id": "arch_06", "type": "read-heavy", "read_write": "90:10", "latency_sensitivity": "high" }
+**Summary**: Fuzzy, relevance-based query systems for product search and log exploration.
+**Technical Specs**:
+* Concurrency: High consumer/enterprise query volume
+* IO Pattern: Asynchronous indexing (writes), complex relevance queries (reads)
+* Tech Stack: Inverted indexes, Vector embeddings, Elasticsearch, Solr
+* Metrics: Query latency <100ms
+---
+
+# ARCHETYPE: API GATEWAY-CENTRIC
+**Metadata**: { "id": "arch_07", "type": "routing", "read_write": "N/A", "latency_sensitivity": "critical" }
+**Summary**: Horizontal entry point for request routing, auth, and rate limiting.
+**Technical Specs**:
+* Concurrency: Extremely high request volume
+* IO Pattern: Small payloads, high-frequency request/response
+* Tech Stack: Horizontal scaling, protocol translation layers
+* Metrics: Minimal per-request compute cost, high resilience
+---
+
+# ARCHETYPE: TRANSACTIONAL OLTP
+**Metadata**: { "id": "arch_08", "type": "acid-compliant", "read_write": "50:50", "latency_sensitivity": "high" }
+**Summary**: Core business operations like payments, bookings, and account management.
+**Technical Specs**:
+* Concurrency: Moderate to high
+* IO Pattern: Frequent small reads/writes with ACID guarantees
+* Tech Stack: Strongly consistent RDBMS (Postgres, MySQL)
+* Metrics: 100% data correctness, tens of milliseconds latency
+---
+
+# ARCHETYPE: BATCH ANALYTICS & DATA WAREHOUSE
+**Metadata**: { "id": "arch_09", "type": "olap", "read_write": "bulk-write", "latency_sensitivity": "low" }
+**Summary**: Historical data processing for BI, reporting, and offline analysis.
+**Technical Specs**:
+* Concurrency: Low (analysts/data scientists)
+* IO Pattern: Bulk data ingestion, large-scale columnar scans
+* Tech Stack: Snowflake, BigQuery, Columnar formats (Parquet)
+* Metrics: Query flexibility and cost-efficiency over speed
+---
+
+# ARCHETYPE: EVENT-DRIVEN WORKFLOWS
+**Metadata**: { "id": "arch_10", "type": "asynchronous", "read_write": "N/A", "latency_sensitivity": "low" }
+**Summary**: Coordination of long-running business processes like order fulfillment.
+**Technical Specs**:
+* Concurrency: High volume of decoupled events
+* IO Pattern: Message queueing, event bus publishing
+* Tech Stack: RabbitMQ, SQS, Temporal, Eventual consistency logic
+* Metrics: Reliability, retries, and idempotency
+---
+
+# ARCHETYPE: CACHING & ACCELERATION
+**Metadata**: { "id": "arch_11", "type": "read-heavy", "read_write": "95:5", "latency_sensitivity": "critical" }
+**Summary**: In-memory layers to reduce backend load and improve response times.
+**Technical Specs**:
+* Concurrency: Very high read volume
+* IO Pattern: Memory-resident lookups, frequent eviction/invalidation
+* Tech Stack: Redis, Memcached, TTL-based eviction
+* Metrics: Cache hit ratio, microsecond latency
+---
+
+# ARCHETYPE: CONFIGURATION & FEATURE FLAGS
+**Metadata**: { "id": "arch_12", "type": "read-heavy", "read_write": "99:1", "latency_sensitivity": "high" }
+**Summary**: Dynamic management of service behavior and feature rollouts.
+**Technical Specs**:
+* Concurrency: Ubiquitous (called by every service)
+* IO Pattern: Read-heavy, fast propagation of updates
+* Tech Stack: Key-value stores, distributed config providers
+* Metrics: High availability, safe rollout control
+---
+
+# ARCHETYPE: AUTHENTICATION & IDENTITY
+**Metadata**: { "id": "arch_13", "type": "security-critical", "read_write": "90:10", "latency_sensitivity": "critical" }
+**Summary**: Critical path systems for user login, tokens, and permissions.
+**Technical Specs**:
+* Concurrency: High (every user session)
+* IO Pattern: Read-heavy (token validation), bursty writes (login)
+* Tech Stack: JWT, OAuth2, Credential auditing, high redundancy
+* Metrics: Security integrity, zero-downtime availability
+---
+
+# ARCHETYPE: NOTIFICATION & FAN-OUT
+**Metadata**: { "id": "arch_14", "type": "asynchronous", "read_write": "write-heavy", "latency_sensitivity": "low" }
+**Summary**: Best-effort delivery of emails, push notifications, and SMS.
+**Technical Specs**:
+* Concurrency: High (bursts triggered by events)
+* IO Pattern: Outbound writes, rate-limited external API calls
+* Tech Stack: Dead-letter queues, retry logic, SMS/Push gateways
+* Metrics: Delivery success rate, observability
+---
+
+# ARCHETYPE: RECOMMENDATION & PERSONALIZATION
+**Metadata**: { "id": "arch_15", "type": "inference-heavy", "read_write": "80:20", "latency_sensitivity": "high" }
+**Summary**: Tailored content ranking (e.g., product feeds) using online inference.
+**Technical Specs**:
+* Concurrency: High (per-user personalized views)
+* IO Pattern: Real-time feature ingestion, ranked read queries
+* Tech Stack: ML inference engines, feature stores, approximate algorithms
+* Metrics: Freshness, accuracy, and inference latency
+---
+
+# ARCHETYPE: MULTI-TENANT SAAS
+**Metadata**: { "id": "arch_16", "type": "isolated", "read_write": "variable", "latency_sensitivity": "medium" }
+**Summary**: Shared infrastructure serving multiple customers with strict isolation.
+**Technical Specs**:
+* Concurrency: Variable across tenants
+* IO Pattern: Tenant-partitioned data access
+* Tech Stack: Tenant-aware routing, usage quotas, billing integration
+* Metrics: Noisy-neighbor prevention, per-tenant observability
+---

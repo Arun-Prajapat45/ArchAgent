@@ -22,7 +22,7 @@ def createDiagram(state: diagramState):
     # Avoid storing the whole 'diagrammer' object in state unless necessary
     return {"output_code": output_code}
 
-def builder():
+def diagramBuilder():
     # Correctly initialize the graph with the TypedDict
     workflow = StateGraph(diagramState)
     workflow.add_node("create", createDiagram)
