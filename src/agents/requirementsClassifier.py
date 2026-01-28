@@ -1,13 +1,13 @@
-import os
+# import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.document_loaders import TextLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain_core.output_parsers import JsonOutputParser
-from pydantic import BaseModel, Field
-from typing import List
+# # from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# from langchain_community.document_loaders import TextLoader
+# from langchain.text_splitter import CharacterTextSplitter
+# from langchain_community.vectorstores import FAISS
+# from langchain.chains import RetrievalQA
+# from langchain_core.output_parsers import JsonOutputParser
+# from pydantic import BaseModel, Field
+# from typing import List
 from src.utils.prompts import RequirementsQuery
 from src.utils.models import RequirementModel
 
@@ -214,13 +214,16 @@ load_dotenv()
 import os
 from pathlib import Path
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain.retrievers import ParentDocumentRetriever
-from langchain.storage import InMemoryStore
+# from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_classic.retrievers import ParentDocumentRetriever
+from langchain_classic.storage import InMemoryStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
-from langchain.chains import RetrievalQA
+from langchain_classic.chains import RetrievalQA
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_community.document_loaders import TextLoader
+# from langch
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
 
 class RequirementsRAG:
     def __init__(
@@ -268,19 +271,17 @@ class RequirementsRAG:
         self.qa_chain = self._init_qa_chain()
 
     def _init_embeddings(self):
-        return OpenAIEmbeddings(
-            api_key=os.getenv("LLM_KEY"),
-            base_url="https://openrouter.ai/api/v1",
-            model="text-embedding-ada-002",
+        return GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001", # ✅ Stable and supported
+            google_api_key=os.getenv("GEMINI_KEY"),
+            task_type="retrieval_document"
         )
 
     def _init_llm(self):
-        return ChatOpenAI(
-            model="deepseek/deepseek-chat",
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("LLM_KEY"),
-            temperature=0.3,
-            max_tokens=1024,
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            api_key=os.getenv("GEMINI_KEY"),
+            temperature=0
         )
 
     def _init_vectorstore_base(self):
@@ -326,3 +327,17 @@ class RequirementsRAG:
             raise ValueError(
                 f"Failed to parse JSON output.\nRaw output:\n{result['result']}"
             ) from e
+        
+
+# rag = RequirementsRAG(
+#     raw_data_dir=RAW_DATA_DIR,
+#     vectorstore_path="../../data/db/faiss_index_requirements",
+#     requirement_model=RequirementModel,
+#     requirements_prompt=RequirementsQuery,
+# )
+
+# response = rag.generate_requirements(
+#     "I want to create a multiplayer gaming application"
+# )
+
+# print(response)

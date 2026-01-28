@@ -45,7 +45,7 @@ def Design(state: hldState) -> dict:
         print("creating first design...")
         output = state['generator'].generate_design(state['goal'])
     else:
-        print("update the design...")
+        print(f"update the design... iteration:{current_iteration}",current_iteration)
         output = state['generator'].update_design(
             state['goal'], 
             state['generator_output'], 

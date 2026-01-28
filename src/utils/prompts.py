@@ -1,4 +1,4 @@
-from langchain.prompts import ChatPromptTemplate
+from langchain_classic.prompts import ChatPromptTemplate
 
 
 ################################################################

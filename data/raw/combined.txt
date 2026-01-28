@@ -1,314 +1,660 @@
-Here is an expanded version for each Core Architecture Pattern, suitable for use in a Retrieval-Augmented Generation (RAG) system. Each entry includes a detailed summary and context.
+# Topic: Load Balancing & Traffic Management
+**Archetype:** Infrastructure_01 (Traffic Orchestration)
 
-***
+**Component_Mapping:**
+- **Component:** "Global Traffic Manager" | **Tech:** "GSLB (Global Server Load Balancing)" | **Rationale:** "Routes users to the nearest regional data center to minimize geographic latency for a global user base."
+- **Component:** "External Load Balancer" | **Tech:** "L7 Application Load Balancer (ALB)" | **Rationale:** "Provides intelligent application-level routing, SSL termination, and session stickiness for web traffic."
+- **Component:** "High-Throughput Ingress" | **Tech:** "L4 Network Load Balancer (NLB)" | **Rationale:** "Handles high-velocity traffic spikes and high RPS requirements by routing at the transport layer with minimal overhead."
+- **Component:** "Internal Service Proxy" | **Tech:** "Service Mesh (Envoy/Istio)" | **Rationale:** "Manages service-to-service discovery, circuit breaking, and internal traffic distribution between microservices."
 
-### Load Balancing
-**Title:** Load Balancing is Impossible  
-**Summary:**  
-Load balancing in distributed systems aims to distribute incoming network traffic across multiple servers to ensure no single server is overwhelmed. However, perfect load balancing is often unattainable due to unpredictable workloads, network latency, and dynamic resource availability. The article discusses various load balancing algorithms, their trade-offs, and real-world challenges, such as session stickiness, failure detection, and the impact of uneven request sizes. It also covers strategies for mitigating these issues, including adaptive load balancing and the use of proxies or gateways to dynamically route requests based on server health and capacity. [github](https://github.com/krootee/awesome-scalability-toolbox)
+**Flow_Logic:**
+- [User] -> [External Load Balancer] -> [API Gateway / Backend Service]
+- [Service A] -> [Internal Proxy] -> [Service B]
 
-***
+**Connectivity:**
+- ["User", "External Load Balancer"]
+- ["External Load Balancer", "API Gateway"]
+- ["API Gateway", "Microservices"]
+- ["Microservice A", "Internal Proxy"]
+- ["Internal Proxy", "Microservice B"]
 
-### Caching
-**Title:** Caching beyond RAM: the case for...  
-**Summary:**  
-Caching is a fundamental technique for improving system performance by storing frequently accessed data in fast-access storage. This article explores advanced caching strategies that go beyond traditional in-memory caches, including disk-based caches, distributed caches (like Redis and Memcached), and hybrid approaches. It discusses scenarios where RAM alone is insufficient, such as when dealing with large datasets or when persistence is required. The article also covers cache eviction policies, consistency models, and strategies for handling cache misses and invalidation, emphasizing the importance of choosing the right caching solution based on workload characteristics and system requirements. [github](https://github.com/krootee/awesome-scalability-toolbox)
 
-***
+# Topic: Caching & Low-Latency Data Access
+**Archetype:** Performance_01 (Data Acceleration)
 
-### Sharding
-**Title:** Consistent Hashing — Rebalance nodes without mass data reshuffle  
-**Summary:**  
-Sharding, or partitioning, is the process of splitting a large dataset into smaller, manageable pieces distributed across multiple nodes. Consistent hashing is a popular technique for sharding that minimizes data movement when nodes are added or removed, making it ideal for scalable systems. The article explains how consistent hashing works, its advantages over traditional hashing methods, and its application in distributed databases and storage systems. It also covers practical considerations such as handling node failures, rebalancing strategies, and the trade-offs between consistency and availability. [github](https://github.com/cyca67/awesome-scalability)
+**Component_Mapping:**
+- **Component:** "Distributed In-Memory Cache" | **Tech:** "Redis" | **Rationale:** "Supports complex data structures and persistence; provides sub-millisecond latency for hot-path data like user feeds and session state."
+- **Component:** "High-Performance Key-Value Store" | **Tech:** "Memcached" | **Rationale:** "A multithreaded, simple key-value store optimized for high-speed retrieval of static objects where data structure complexity isn't required."
+- **Component:** "Edge Content Cache" | **Tech:** "CDN (CloudFront/Cloudflare)" | **Rationale:** "Offloads static asset delivery and media files to edge locations, reducing origin load and meeting P99 latency targets."
 
-***
+**Flow_Logic:**
+- [Application] -> [Cache Cluster] -> [Hit: Return Data]
+- [Application] -> [Cache Cluster] -> [Miss: Database] -> [Update Cache] -> [Return Data]
 
-### Replication
-**Title:** Replication — Use leader-follower or multi-leader models for availability  
-**Summary:**  
-Replication involves maintaining multiple copies of data across different nodes to enhance system availability and fault tolerance. The article describes two primary replication models: leader-follower and multi-leader. In the leader-follower model, one node acts as the leader, handling all writes, while followers replicate data and serve read requests. In the multi-leader model, multiple nodes can accept writes, improving write scalability but introducing challenges around consistency. The article discusses the trade-offs between these models, including consistency, latency, and complexity, and provides guidance on choosing the right model for specific use cases. [github](https://github.com/cyca67/awesome-scalability)
+**Connectivity:**
+- ["Application Service", "Redis"]
+- ["Application Service", "Memcached"]
+- ["User", "CDN"]
+- ["CDN", "Storage Bucket"]
 
-***
 
-### CQRS
-**Title:** CQRS (Command Query Responsibility Segregation)  
-**Summary:**  
-CQRS is a design pattern that separates the responsibilities of handling commands (writes) and queries (reads) in a system. This separation allows for optimized read and write paths, improving scalability and performance. The article explains the benefits of CQRS, such as the ability to scale read and write operations independently, and discusses implementation considerations, including eventual consistency, data synchronization, and the use of event sourcing. It also covers common use cases and challenges, such as increased complexity and the need for robust monitoring and error handling. [github](https://github.com/cyca67/awesome-scalability)
 
-***
+# Topic: Database Sharding & Partitioning
+**Archetype:** Scalability_01 (Data Distribution)
 
-### Event Sourcing
-**Title:** Event Sourcing — Store state transitions as an append-only log  
-**Summary:**  
-Event sourcing is a pattern where the state of a system is managed by storing all state changes as a sequence of events in an append-only log. This approach provides a complete audit trail and enables flexible data recovery and replay. The article explains how event sourcing works, its advantages in terms of auditability and scalability, and practical considerations such as event storage, querying, and handling event schema changes. It also discusses integration with other patterns, such as CQRS, and provides examples of real-world applications. [github](https://github.com/cyca67/awesome-scalability)
+**Component_Mapping:**
+- **Component:** "Data Sharding Manager" | **Tech:** "Consistent Hashing" | **Rationale:** "Minimizes data movement during cluster rebalancing and node failures, ensuring high availability and scalability for large datasets."
+- **Component:** "Sharded Database Cluster" | **Tech:** "Horizontal Partitioning" | **Rationale:** "Distributes data across multiple physical nodes to overcome single-node storage and throughput limits (PB-scale readiness)."
+- **Component:** "Shard Key Router" | **Tech:** "Application-level or Middleware Routing" | **Rationale:** "Directs queries to the correct database shard based on a shard key (e.g., UserID) to ensure efficient data retrieval."
 
-***
+**Flow_Logic:**
+- [Write/Read Request] -> [Shard Router] -> [Calculate Hash/Slot] -> [Target Database Shard]
+- [Node Added] -> [Consistent Hashing Ring Update] -> [Minimal Data Migration]
 
-### Service Mesh
-**Title:** Service mesh API Gateway  
-**Summary:**  
-A service mesh is a dedicated infrastructure layer that handles service-to-service communication in a microservices architecture. The article discusses the role of service meshes and API gateways in managing communication, security, and observability between microservices. It covers key features such as load balancing, service discovery, authentication, and monitoring, and explains how these components improve scalability, reliability, and maintainability in distributed systems. The article also provides guidance on choosing and implementing service mesh solutions, such as Istio and Linkerd. [github](https://github.com/krootee/awesome-scalability-toolbox)
+**Connectivity:**
+- ["Application Service", "Shard Router"]
+- ["Shard Router", "Database Shard A"]
+- ["Shard Router", "Database Shard B"]
+- ["Shard Router", "Database Shard N"]
 
-***
 
-### API Gateway
-**Title:** API Gateway  
-**Summary:**  
-An API gateway acts as a single entry point for all client requests in a microservices architecture, providing features such as routing, authentication, rate limiting, and monitoring. The article explains the benefits of using an API gateway, including simplified client interactions, improved security, and enhanced scalability. It discusses implementation considerations, such as handling cross-cutting concerns, integrating with service meshes, and managing API versioning. The article also covers popular API gateway solutions and best practices for deployment and management. [github](https://github.com/krootee/awesome-scalability-toolbox)
+# Topic: Data Replication & High Availability
+**Archetype:** Reliability_01 (Fault Tolerance)
 
-***
+**Component_Mapping:**
+- **Component:** "Primary Database (Leader)" | **Tech:** "Leader-Follower Replication" | **Rationale:** "Centralizes writes to a single node to ensure strict consistency while offloading reads to followers."
+- **Component:** "Read Replica (Follower)" | **Tech:** "Asynchronous Replication" | **Rationale:** "Scales read throughput horizontally and provides high availability during primary node failure."
+- **Component:** "Multi-Master Cluster" | **Tech:** "Multi-Leader Replication" | **Rationale:** "Enables writes across multiple geographic regions to reduce write latency and ensure continuous uptime."
 
-### Microservices
-**Title:** Microservices: Designing for failure  
-**Summary:**  
-Microservices architecture involves decomposing a monolithic application into smaller, independently deployable services. The article discusses strategies for designing microservices that can tolerate failures, such as implementing circuit breakers, retries, and fallback mechanisms. It covers the importance of resilience, scalability, and maintainability in microservices systems and provides guidance on common challenges, including service discovery, inter-service communication, and data consistency. The article also highlights best practices for monitoring, logging, and debugging in microservices environments. [github](https://github.com/cyca67/awesome-scalability)
+**Flow_Logic:**
+- [Client Write] -> [Leader Node] -> [Replication Log] -> [Follower Nodes]
+- [Client Read] -> [Follower Node]
 
-***
+**Connectivity:**
+- ["Application Service", "Leader Node"]
+- ["Application Service", "Follower Node"]
+- ["Leader Node", "Follower Node"]
 
-### Monolith to Microservices
-**Title:** Monolith to Microservices migration patterns  
-**Summary:**  
-Migrating from a monolithic architecture to a microservices-based system involves breaking down a large, tightly coupled application into smaller, loosely coupled services. The article outlines common migration patterns, such as the strangler pattern, where new microservices are gradually introduced alongside the existing monolith. It discusses the benefits of microservices, such as improved scalability, flexibility, and maintainability, and provides guidance on managing the migration process, including data migration, service boundaries, and integration testing. The article also covers challenges and best practices for successful migration. [github](https://github.com/cyca67/awesome-scalability)
 
-***
 
-Each summary provides a detailed context and explanation, making them suitable for use in a RAG system. [github](https://github.com/krootee/awesome-scalability-toolbox)
+# Topic: CQRS & Event Sourcing
+**Archetype:** Scalability_02 (Read-Write Segregation)
 
+**Component_Mapping:**
+- **Component:** "Command Service" | **Tech:** "Write-Optimized DB (e.g., PostgreSQL/RDBMS)" | **Rationale:** "Handles state changes and ensures domain validation for all 'write' operations."
+- **Component:** "Query Service" | **Tech:** "Read-Optimized DB (e.g., Elasticsearch/Redis)" | **Rationale:** "Optimized for complex lookups and high-speed data retrieval, independent of the write schema."
+- **Component:** "Event Store" | **Tech:** "Append-Only Log (e.g., EventStoreDB/Kafka)" | **Rationale:** "Persists every state change as a sequence of immutable events for full auditability and replay."
 
-Here are the topic names, titles, and expanded summaries for the specified Data and Storage Patterns:
+**Flow_Logic:**
+- [Command] -> [Command Service] -> [Event Store] -> [Event Bus] -> [Projection Worker] -> [Read DB]
+- [Query] -> [Query Service] -> [Read DB]
 
-***
+**Connectivity:**
+- ["User", "Command Service"]
+- ["Command Service", "Event Store"]
+- ["Event Store", "Projection Worker"]
+- ["Projection Worker", "Read DB"]
+- ["User", "Query Service"]
 
-### Event Streams
-**Title:** Event Streams — Use Kafka or Pulsar for high-throughput, ordered streams  
-**Summary:**  
-Event streams are used to capture and process sequences of events in real-time, enabling scalable and decoupled architectures. Apache Kafka and Apache Pulsar are popular distributed messaging systems that provide high-throughput, ordered streams for event-driven applications. The article discusses the architecture of event streaming platforms, including topics, partitions, and consumer groups, and explains how they ensure reliability, scalability, and fault tolerance. It also covers use cases such as real-time analytics, stream processing, and event sourcing, and provides best practices for designing and managing event-driven systems. [github](https://github.com/cyca67/awesome-scalability)
 
-***
 
-### Log-structured Storage
-**Title:** The Log-Structured Merge-Tree (LSM-Tree) whitepaper  
-**Summary:**  
-Log-structured storage, particularly through the Log-Structured Merge-Tree (LSM-Tree) data structure, is widely used in modern databases for efficient write-heavy workloads. The LSM-Tree organizes data in a series of sorted files, allowing for fast writes and efficient compaction. The article explains the LSM-Tree architecture, including the use of memtables, SSTables, and background compaction processes. It discusses the trade-offs between read and write performance, and provides guidance on optimizing LSM-Tree-based systems for scalability and durability. The article also covers real-world applications in databases like Cassandra and RocksDB. [github](https://github.com/cyca67/awesome-scalability)
 
-***
+# Topic: Edge & Internal Communication
+**Archetype:** Infrastructure_02 (Communication Governance)
 
-### Time-series Storage
-**Title:** Time-series Storage — Use retention, downsampling, and indexing  
-**Summary:**  
-Time-series storage is designed to handle large volumes of time-stamped data, such as metrics, logs, and sensor readings. The article covers strategies for managing time-series data, including retention policies to control data lifespan, downsampling to reduce storage costs, and indexing to speed up queries. It explains the architecture of time-series databases, such as InfluxDB and TimescaleDB, and discusses best practices for optimizing performance and scalability. The article also highlights use cases in monitoring, analytics, and IoT applications. [github](https://github.com/cyca67/awesome-scalability)
+**Component_Mapping:**
+- **Component:** "Edge Gateway" | **Tech:** "API Gateway (Kong/AWS Gateway)" | **Rationale:** "Centralizes authentication, rate limiting, and request routing for all external client traffic."
+- **Component:** "Sidecar Proxy" | **Tech:** "Service Mesh (Envoy/Istio)" | **Rationale:** "Decouples infrastructure concerns like mTLS, retries, and observability from the application code."
+- **Component:** "Service Discovery" | **Tech:** "Consul/Etcd" | **Rationale:** "Maintains a dynamic registry of service instances to enable automated load balancing in ephemeral environments."
 
-***
+**Flow_Logic:**
+- [User] -> [API Gateway] -> [Internal Service Mesh] -> [Target Microservice]
+- [Service A Proxy] -> [mTLS Handshake] -> [Service B Proxy]
 
-### Indexing and Search
-**Title:** Indexing and Search — Use inverted indexes and sharded search clusters  
-**Summary:**  
-Indexing and search are critical for enabling fast and efficient data retrieval in large-scale systems. The article discusses the use of inverted indexes, which map terms to their locations in documents, and sharded search clusters, which distribute data across multiple nodes for scalability. It covers the architecture of search engines like Elasticsearch and Solr, including indexing strategies, query processing, and distributed search. The article also provides guidance on optimizing search performance, handling large datasets, and integrating search capabilities into scalable applications. [github](https://github.com/cyca67/awesome-scalability)
+**Connectivity:**
+- ["User", "API Gateway"]
+- ["API Gateway", "Sidecar Proxy"]
+- ["Sidecar Proxy", "Microservice"]
+- ["Sidecar Proxy", "Sidecar Proxy"]
 
-***
 
-### Materialized Views
-**Title:** Materialized Views — Precompute views to speed reads  
-**Summary:**  
-Materialized views are database objects that store the result of a query as a physical table, enabling faster read operations at the cost of increased storage and maintenance overhead. The article explains the architecture of materialized views, including how they are updated and maintained, and discusses their use in optimizing read-heavy workloads. It covers best practices for designing and managing materialized views, such as choosing the right refresh strategy and handling data consistency. The article also highlights real-world applications in analytics and reporting. [github](https://github.com/cyca67/awesome-scalability)
 
-***
+# Topic: Microservices Architecture
+**Archetype:** arch_02 (Distributed Systems)
 
-### Consistent Hashing
-**Title:** Consistent Hashing — Rebalance nodes without mass data reshuffle  
-**Summary:**  
-Consistent hashing is a technique used to distribute data across nodes in a distributed system, minimizing data movement when nodes are added or removed. The article explains the consistent hashing algorithm, including the use of hash rings and virtual nodes, and discusses its advantages over traditional hashing methods. It covers practical considerations such as handling node failures, rebalancing strategies, and the trade-offs between consistency and availability. The article also provides examples of real-world applications in distributed databases and storage systems. [github](https://github.com/cyca67/awesome-scalability)
+**Component_Mapping:**
+- **Component:** "Decoupled Service" | **Tech:** "Microservices" | **Rationale:** "Enables independent scaling, deployment, and technology choices for different business domains."
+- **Component:** "Resiliency Handler" | **Tech:** "Circuit Breaker (Resilience4j/Hystrix)" | **Rationale:** "Prevents cascading failures by failing fast when a downstream service is unresponsive."
+- **Component:** "Legacy Wrapper" | **Tech:** "Strangler Fig Pattern" | **Rationale:** "Gradually replaces monolithic functionality with microservices by intercepting and routing traffic."
 
-***
+**Flow_Logic:**
+- [Request] -> [Proxy] -> [If New: Microservice / If Old: Monolith]
+- [Service Call] -> [Circuit Breaker] -> [Fallback Logic]
 
-Each summary provides a detailed context and explanation, making them suitable for use in a RAG system. [github](https://github.com/cyca67/awesome-scalability)
+**Connectivity:**
+- ["API Gateway", "Microservice"]
+- ["API Gateway", "Monolith"]
+- ["Microservice", "Message Broker"]
 
-Here are the topic names, titles, and expanded summaries for Hands-on Labs:
 
-***
 
-### Scalable HTTP API Example
-**Title:** Scalable HTTP API with Nginx, Node, and Redis cache  
-**Summary:**  
-This hands-on lab demonstrates how to build a scalable HTTP API using Nginx as a reverse proxy, Node.js for backend logic, and Redis for caching. The article walks through the architecture, including load balancing with Nginx, handling requests with Node.js, and improving performance with Redis caching. It covers best practices for scaling the API, such as horizontal scaling, health checks, and cache invalidation. The lab provides step-by-step instructions and code examples for deploying and testing the scalable API in a production-like environment. [github](https://github.com/cyca67/awesome-scalability)
+# Topic: Event Streams & Real-Time Processing
+**Archetype:** arch_02 (Event-Driven Systems)
 
-***
+**Component_Mapping:**
+- **Component:** "Message Broker / Event Log" | **Tech:** "Apache Kafka / Pulsar" | **Rationale:** "Provides high-throughput, ordered, and fault-tolerant event streaming for decoupled microservices."
+- **Component:** "Stream Processor" | **Tech:** "Apache Flink / Kafka Streams" | **Rationale:** "Handles real-time data transformations, windowing, and stateful processing of incoming event streams."
+- **Component:** "Consumer Group" | **Tech:** "Parallel Workers" | **Rationale:** "Enables horizontal scaling of message consumption while maintaining order within specific partitions."
 
-### Event-driven Pipeline
-**Title:** Event-driven pipeline using Kafka + Flink  
-**Summary:**  
-This hands-on lab shows how to create an event-driven pipeline using Apache Kafka for event streaming and Apache Flink for stream processing. The article explains the architecture, including Kafka topics for event ingestion, Flink jobs for processing, and output sinks for storing results. It covers best practices for designing and managing event-driven pipelines, such as handling backpressure, fault tolerance, and scaling. The lab provides detailed instructions and code examples for setting up and running the pipeline in a distributed environment. [github](https://github.com/cyca67/awesome-scalability)
+**Flow_Logic:**
+- [Producer] -> [Kafka Topic/Partition] -> [Stream Processor] -> [Consumer/Sink]
 
-***
+**Connectivity:**
+- ["Producer Service", "Kafka"]
+- ["Kafka", "Stream Processor"]
+- ["Stream Processor", "Storage Sink"]
 
-### Distributed Job Queue
-**Title:** Distributed job queue with visibility timeout and retries  
-**Summary:**  
-This hands-on lab demonstrates how to implement a distributed job queue with features like visibility timeout and retries. The article explains the architecture, including the use of message queues (such as RabbitMQ or AWS SQS) for job distribution, and techniques for ensuring reliability and fault tolerance. It covers best practices for managing job queues, such as handling job failures, visibility timeouts, and retry mechanisms. The lab provides step-by-step instructions and code examples for building and testing a distributed job queue. [github](https://github.com/cyca67/awesome-scalability)
 
-***
 
-### Sharded Storage Demo
-**Title:** Sharded storage demo with consistent hashing  
-**Summary:**  
-This hands-on lab shows how to implement sharded storage using consistent hashing for data distribution. The article explains the architecture, including the use of consistent hashing to minimize data movement during scaling and rebalancing. It covers best practices for managing sharded storage, such as handling node failures, data migration, and query routing. The lab provides detailed instructions and code examples for setting up and testing a sharded storage system. [github](https://github.com/cyca67/awesome-scalability)
+# Topic: Write-Optimized & Time-Series Storage
+**Archetype:** Storage_02 (High-Ingestion Data)
 
-***
+**Component_Mapping:**
+- **Component:** "LSM-Tree Database" | **Tech:** "Cassandra / RocksDB" | **Rationale:** "Optimized for high write throughput using memtables and SSTables to minimize disk I/O contention."
+- **Component:** "Time-Series Database" | **Tech:** "InfluxDB / TimescaleDB" | **Rationale:** "Specialized for time-stamped data; supports automatic downsampling and retention policies for metrics/logs."
+- **Component:** "Precomputed View" | **Tech:** "Materialized Views" | **Rationale:** "Accelerates read queries by pre-aggregating raw data into physical tables at the cost of write-time overhead."
 
-### Observability Lab
-**Title:** Observability lab with Prometheus, Grafana, and Jaeger tracing  
-**Summary:**  
-This hands-on lab demonstrates how to set up observability for a distributed system using Prometheus for metrics collection, Grafana for visualization, and Jaeger for distributed tracing. The article explains the architecture, including instrumentation of applications, collection of metrics and traces, and visualization with Grafana. It covers best practices for monitoring and troubleshooting distributed systems, such as setting up alerts and analyzing traces. The lab provides step-by-step instructions and code examples for deploying and testing the observability stack. [github](https://github.com/cyca67/awesome-scalability)
+**Flow_Logic:**
+- [Write Request] -> [Memtable] -> [SSTable Flush] -> [Background Compaction]
+- [Metrics Query] -> [Downsampled Table] -> [Visualization Dashboard]
 
-***
+**Connectivity:**
+- ["Ingestion Service", "Cassandra"]
+- ["Monitoring Agent", "InfluxDB"]
+- ["Analytics Service", "Materialized Views"]
 
-Each summary provides a detailed context and explanation, making them suitable for use in a RAG system. [github](https://github.com/cyca67/awesome-scalability)
 
-Here are the topic names, titles, and expanded summaries for Resilience and Ops Patterns:
 
-***
 
-### Auto-scaling
-**Title:** Auto-scaling — Scale based on relevant signals  
-**Summary:**  
-Auto-scaling is a technique used to dynamically adjust the number of resources (such as servers or containers) in response to changes in workload or demand. The article discusses the architecture of auto-scaling systems, including the use of metrics like CPU utilization, request rate, and error rate to trigger scaling actions. It covers different types of auto-scaling, such as vertical scaling (increasing resources on a single node) and horizontal scaling (adding more nodes), and explains how auto-scaling improves system resilience and cost efficiency. The article also provides best practices for configuring and monitoring auto-scaling policies in cloud environments. [github](https://github.com/cyca67/awesome-scalability)
+# Topic: Full-Text Search & Indexing
+**Archetype:** Search_01 (Discovery & Discovery)
 
-***
+**Component_Mapping:**
+- **Component:** "Search Engine" | **Tech:** "Elasticsearch / Solr" | **Rationale:** "Uses inverted indexes to provide sub-second full-text search and complex filtering across distributed shards."
+- **Component:** "Index Manager" | **Tech:** "Logstash / Custom Worker" | **Rationale:** "Handles data ingestion, normalization, and indexing from primary databases into the search cluster."
 
-### Observability
-**Title:** Observability — Collect logs, traces, and metrics  
-**Summary:**  
-Observability is the practice of collecting and analyzing logs, traces, and metrics to understand the behavior and performance of a system. The article explains the three pillars of observability—logging, tracing, and monitoring—and discusses how they enable proactive issue detection, root cause analysis, and performance optimization. It covers the architecture of observability platforms, such as Prometheus, Grafana, and Jaeger, and provides guidance on instrumenting applications for observability. The article also highlights best practices for managing observability data and integrating observability into CI/CD pipelines. [github](https://github.com/cyca67/awesome-scalability)
+**Flow_Logic:**
+- [Search Query] -> [Search Cluster] -> [Inverted Index Lookup] -> [Ranked Results]
+- [Data Change] -> [Sync Worker] -> [Elasticsearch Update]
 
-***
+**Connectivity:**
+- ["User", "Search Service"]
+- ["Search Service", "Elasticsearch Cluster"]
+- ["Database", "Index Sync Worker"]
 
-### Chaos Engineering
-**Title:** Chaos Engineering — Inject failures to discover brittle assumptions  
-**Summary:**  
-Chaos Engineering is a practice of intentionally injecting failures into a system to uncover weaknesses and improve resilience. The article discusses the principles of chaos engineering, including the use of controlled experiments to simulate real-world failures such as network partitions, node crashes, and latency spikes. It covers the architecture of chaos engineering tools, such as Chaos Monkey and Gremlin, and explains how they help teams build more robust and fault-tolerant systems. The article also provides best practices for conducting chaos experiments and integrating chaos engineering into the development lifecycle. [github](https://github.com/cyca67/awesome-scalability)
 
-***
 
-### Capacity Planning
-**Title:** Capacity Planning — Model peak load, tail latencies, and growth  
-**Summary:**  
-Capacity planning is the process of estimating the resources required to meet future demand and ensure system reliability. The article discusses techniques for modeling peak load, tail latencies, and growth, including the use of historical data, load testing, and forecasting models. It covers the architecture of capacity planning tools, such as monitoring systems and simulation platforms, and explains how they help teams make informed decisions about scaling and resource allocation. The article also provides best practices for capacity planning in dynamic environments, such as cloud and distributed systems. [github](https://github.com/cyca67/awesome-scalability)
 
-***
+# Topic: Distributed Job Queues
+**Archetype:** Pattern_01 (Asynchronous Task Processing)
 
-### SRE Best Practices
-**Title:** Google Site Reliability Engineering book  
-**Summary:**  
-Site Reliability Engineering (SRE) is a set of practices and principles for managing large-scale systems and ensuring high availability and reliability. The article summarizes key concepts from the Google SRE book, including error budgets, service level objectives (SLOs), and automation. It covers the architecture of SRE practices, such as incident management, monitoring, and on-call rotations, and explains how they help teams maintain system reliability and respond to incidents effectively. The article also provides best practices for implementing SRE in organizations of all sizes. [github](https://github.com/cyca67/awesome-scalability)
+**Component_Mapping:**
+- **Component:** "Distributed Queue" | **Tech:** "AWS SQS / RabbitMQ" | **Rationale:** "Decouples request ingestion from heavy processing; provides visibility timeouts to ensure jobs aren't lost on worker failure."
+- **Component:** "Worker Pool" | **Tech:** "Auto-scaling Consumers" | **Rationale:** "Scales horizontally to process background tasks (e.g., video encoding, email delivery) based on queue depth."
 
-***
+**Flow_Logic:**
+- [API Call] -> [Push Message to Queue] -> [Worker Pulls Job] -> [Ack or Retry on Timeout]
 
-Each summary provides a detailed context and explanation, making them suitable for use in a RAG system. [github](https://github.com/cyca67/awesome-scalability)
+**Connectivity:**
+- ["API Service", "Distributed Queue"]
+- ["Distributed Queue", "Worker Pool"]
 
-Here are the topic names, titles, and expanded summaries for Guides and Trade-offs:
 
-***
+# Topic: System Observability
+**Archetype:** Infrastructure_03 (Monitoring & Tracing)
 
-### CAP Theorem
-**Title:** CAP and PACELC trade-offs  
-**Summary:**  
-The CAP theorem states that in a distributed system, it is impossible to simultaneously guarantee consistency, availability, and partition tolerance. The article explains the implications of the CAP theorem for system design, including the trade-offs between these properties. It covers the PACELC extension, which further refines the trade-offs by considering latency and consistency in both normal and partitioned scenarios. The article provides practical guidance on choosing the right consistency model based on application requirements and discusses real-world examples of systems that prioritize different aspects of the CAP theorem. [github](https://github.com/cyca67/awesome-scalability)
+**Component_Mapping:**
+- **Component:** "Metrics Collector" | **Tech:** "Prometheus" | **Rationale:** "Scrapes time-series metrics from services to provide real-time visibility into system health and RPS."
+- **Component:** "Distributed Tracer" | **Tech:** "Jaeger" | **Rationale:** "Tracks requests as they propagate through microservices to identify latency bottlenecks in the call chain."
+- **Component:** "Visualization" | **Tech:** "Grafana" | **Rationale:** "Aggregates data from multiple sources (Metrics/Logs) into centralized operational dashboards."
 
-***
+**Flow_Logic:**
+- [Request] -> [Inject Span ID] -> [Trace Collector] -> [Jaeger Storage]
+- [Metrics Exporter] -> [Prometheus Scrape] -> [Alertmanager]
 
-### Horizontal Scaling
-**Title:** Horizontal Scaling  
-**Summary:**  
-Horizontal scaling involves adding more nodes to a system to distribute the load and improve performance. The article discusses the architecture of horizontally scalable systems, including the use of load balancers, distributed databases, and message queues. It covers the benefits of horizontal scaling, such as improved fault tolerance and scalability, and explains the challenges, such as increased complexity and the need for distributed coordination. The article also provides best practices for designing and managing horizontally scalable systems, including strategies for data partitioning and replication. [github](https://github.com/cyca67/awesome-scalability)
+**Connectivity:**
+- ["Microservices", "Prometheus"]
+- ["Microservices", "Jaeger Collector"]
+- ["Grafana", "Prometheus"]
+- ["Grafana", "Jaeger Query"]
 
-***
 
-### Partitioning
-**Title:** Partitioning, rebalancing, and compaction  
-**Summary:**  
-Partitioning is the process of dividing data into smaller, manageable pieces distributed across multiple nodes. The article explains the architecture of partitioning strategies, including range partitioning, hash partitioning, and consistent hashing. It covers the challenges of partitioning, such as handling node failures and rebalancing data, and discusses techniques for compaction and data migration. The article also provides guidance on choosing the right partitioning strategy based on workload characteristics and system requirements. [github](https://github.com/cyca67/awesome-scalability)
 
-***
 
-### Quorum Systems
-**Title:** Quorum systems and replication factors  
-**Summary:**  
-Quorum systems are used to ensure data consistency and availability in distributed systems by requiring a majority of nodes to agree on operations. The article discusses the architecture of quorum systems, including the use of replication factors and voting mechanisms. It covers the trade-offs between consistency and availability, and explains how quorum systems handle node failures and network partitions. The article also provides best practices for configuring quorum systems and integrating them into distributed databases and storage systems. [github](https://github.com/cyca67/awesome-scalability)
+# Topic: Dynamic Resource Scaling
+**Archetype:** Infrastructure_04 (Elasticity)
 
-***
+**Component_Mapping:**
+- **Component:** "Scaling Trigger" | **Tech:** "Metric-Based Auto-scaler (HPA/ASG)" | **Rationale:** "Automatically adjusts resource count based on real-time signals like CPU utilization, request rates, or custom application metrics."
+- **Component:** "Horizontal Scaler" | **Tech:** "Kubernetes Pod Autoscaler / EC2 Auto Scaling" | **Rationale:** "Adds or removes service instances to maintain performance during traffic surges while optimizing costs during idle periods."
+- **Component:** "Vertical Scaler" | **Tech:** "VPA (Vertical Pod Autoscaler)" | **Rationale:** "Adjusts the resource limits (CPU/RAM) of existing instances for workloads that cannot be easily partitioned or sharded."
 
-### Consensus Algorithms
-**Title:** Distributed consensus (Raft, Paxos)  
-**Summary:**  
-Consensus algorithms, such as Raft and Paxos, are used to achieve agreement on a single value among distributed nodes. The article explains the architecture of consensus algorithms, including leader election, log replication, and fault tolerance. It covers the trade-offs between different consensus algorithms, such as performance, complexity, and fault tolerance, and provides guidance on choosing the right algorithm for specific use cases. The article also discusses real-world applications of consensus algorithms in distributed databases and coordination services. [github](https://github.com/cyca67/awesome-scalability)
+**Flow_Logic:**
+- [Metric Threshold Exceeded] -> [Scaling Engine] -> [Provision New Nodes/Pods] -> [Load Balancer Target Update]
 
-***
+**Connectivity:**
+- ["Monitoring System", "Scaling Engine"]
+- ["Scaling Engine", "Cloud Provider API"]
+- ["Scaling Engine", "Load Balancer"]
 
-### Observability Patterns
-**Title:** Observability patterns and SLOs  
-**Summary:**  
-Observability patterns are techniques for monitoring and understanding the behavior of distributed systems. The article discusses common observability patterns, such as logging, tracing, and metrics collection, and explains how they enable proactive issue detection and root cause analysis. It covers the use of service level objectives (SLOs) to define and measure system reliability, and provides best practices for implementing observability patterns in scalable systems. The article also highlights real-world examples of observability in production environments. [github](https://github.com/cyca67/awesome-scalability)
 
-***
 
-Each summary provides a detailed context and explanation, making them suitable for use in a RAG system. [github](https://github.com/cyca67/awesome-scalability)
+# Topic: Chaos Engineering
+**Archetype:** Reliability_02 (Resilience Validation)
 
-topic: Design Amazon: Online Shopping System  
-summary:  
-This document details the design of an online shopping system similar to Amazon, covering features such as product catalog management, user accounts, shopping cart, order processing, payment integration, and inventory management. The system must handle high volumes of products, users, and transactions, ensuring reliability and scalability. The architecture includes distributed databases for storing product, user, and order data, with mechanisms to manage concurrency and prevent issues such as overselling. The shopping cart is implemented with session management and real-time inventory checks. The system supports real-time updates for order status and inventory levels, ensuring consistency across distributed components. Caching and load balancing are employed to optimize performance, especially during high-traffic periods like sales events. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of products and users. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication, authorization, and secure payment processing. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in products and users. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+**Component_Mapping:**
+- **Component:** "Fault Injector" | **Tech:** "Chaos Mesh / Gremlin / AWS Fault Injection Simulator" | **Rationale:** "Deliberately introduces network latency, pod kills, or disk failures to identify brittle architectural assumptions."
+- **Component:** "Steady State Monitor" | **Tech:** "Prometheus / Datadog" | **Rationale:** "Defines the 'normal' health baseline to immediately detect and halt experiments if the blast radius exceeds safety limits."
 
-topic: Designing an API Rate Limiter  
-summary:  
-This document covers the design of an API rate limiter, which restricts the number of requests a user can make to an API within a specified time window. The system must handle high volumes of API requests and enforce limits efficiently to prevent abuse and ensure fair usage. The architecture uses distributed counters or token buckets to track request rates per user, with mechanisms to update and check these counters in real-time. The rate limiter is integrated at the API gateway level, allowing it to intercept and control incoming requests before they reach backend services. The system supports different rate limiting strategies, such as fixed window, sliding window, and leaky bucket, each with tradeoffs in terms of accuracy and performance. Caching and load balancing are employed to optimize performance, especially during spikes in API traffic. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of counters and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of users and API requests. Security considerations include protecting rate limit data and ensuring user privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and API requests. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+**Flow_Logic:**
+- [Define Hypothesis] -> [Inject Fault] -> [Monitor Steady State] -> [Analyze Weakness] -> [Rollback/Fix]
 
-topic: Distributed Logging  
-summary:  
-This document outlines the design of a distributed logging system, which collects, stores, and analyzes logs from multiple services in a distributed environment. The system must handle high volumes of log data, support real-time ingestion, and provide efficient querying and analysis capabilities. The architecture includes distributed log collectors that forward logs to a centralized or distributed storage backend, such as Elasticsearch, Kafka, or HDFS. Logs are indexed for fast searching and can be aggregated for analytics and monitoring. The system supports real-time updates and deduplication of logs, ensuring each log entry is processed only once. Caching and load balancing are employed to optimize performance, especially during spikes in log volume. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of logs and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of services and log entries. Security considerations include protecting log data and ensuring privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in services and log entries. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+**Connectivity:**
+- ["Chaos Controller", "Target Microservice"]
+- ["Chaos Controller", "Monitoring System"]
 
-topic: Designing an E-ticketing Service like Ticketmaster  
-summary:  
-This document outlines the design of an e-ticketing service similar to Ticketmaster, covering features such as event creation, ticket sales, seat selection, and payment processing. The system must handle high volumes of ticket sales, especially during popular events, and ensure fair and secure transactions. The architecture includes distributed databases for storing event, ticket, and user data, with mechanisms to manage concurrency and prevent double booking. Real-time seat selection is supported, with strategies to lock seats during the purchase process and release them if the transaction fails. The system uses distributed locking and transaction management to ensure data consistency. Caching and load balancing are employed to optimize performance, especially during high-traffic periods. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of events and users. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication, authorization, and secure payment processing. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in events and users. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
 
 
-topic: Designing Cloud File Storage like Dropbox/GDrive  
-summary:  
-This document covers the design of a cloud file storage service similar to Dropbox or Google Drive, focusing on features such as file upload, download, sharing, synchronization, and versioning. The system must handle large volumes of files and support real-time synchronization across multiple devices. The architecture includes distributed file storage (e.g., HDFS, S3) for scalability and reliability, with mechanisms for deduplication and chunking files to optimize storage and bandwidth. Metadata is managed in distributed databases for efficient querying and access control. The system supports real-time updates and conflict resolution, ensuring consistency across devices. Caching and load balancing are employed to optimize performance, especially during high-traffic periods. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of users and files. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication, authorization, and encryption. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and files. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+# Topic: Reliability Governance (SRE)
+**Archetype:** Governance_01 (Operational Excellence)
 
+**Component_Mapping:**
+- **Component:** "Reliability Dashboard" | **Tech:** "SLO/SLI Tracker" | **Rationale:** "Aligns technical performance with business goals by tracking Error Budgets and Service Level Objectives."
+- **Component:** "Traffic Simulator" | **Tech:** "Load Testing (k6 / Locust)" | **Rationale:** "Models peak load and tail latencies to inform capacity planning and prevent saturation during high-growth events."
+- **Component:** "Automated Remediation" | **Tech:** "Self-healing Scripts / Runbooks" | **Rationale:** "Reduces operational 'toil' by automatically resolving known failure patterns (e.g., clearing logs, restarting stuck threads)."
 
+**Flow_Logic:**
+- [Traffic Growth Forecast] -> [Load Test Simulation] -> [Identify Bottleneck] -> [Provision Capacity]
+- [Error Budget Depleted] -> [Freeze Feature Deploys] -> [Focus on Stability]
 
-Here is the first topic:
+**Connectivity:**
+- ["SRE Platform", "Application Metrics"]
+- ["Load Generator", "API Gateway"]
+- ["Remediation Engine", "Service Controller"]
 
-topic: Designing Instagram  
-summary:  
-The document outlines the design of a photo-sharing service similar to Instagram, focusing on both functional and non-functional requirements. Users can upload, download, and view photos, search by title, follow other users, and receive a newsfeed of photos from those they follow. The system must be highly available and reliable, with a target latency of under 200ms for newsfeed generation. Capacity estimation assumes 500 million users, 1 million daily active users, and 2 million new photos per day, totaling about 1.4 petabytes over 10 years. Photos are stored in distributed file storage (e.g., Hadoop or S3), while metadata is managed in a distributed NoSQL database like Cassandra for scalability and reliability. The database schema includes tables for users, photos, and user follows. Data sharding is based on UserID or PhotoID, with strategies to handle hot users and uneven data distribution. Newsfeed generation involves fetching recent photos from followed users and ranking them by recency or popularity, with options for pre-generation and hybrid push/pull updates. The system uses CDNs for efficient photo delivery and intelligent caching (e.g., LRU) to optimize metadata access. Redundancy and failover mechanisms ensure high availability and reliability, with multiple replicas of data and services to prevent single points of failure. The architecture is designed to scale horizontally, supporting future growth in users and content. The document also discusses the importance of monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication and authorization. The design emphasizes tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
 
 
-topic: Designing Instagram Feed  
-summary:  
-This document details the design of an Instagram feed, focusing on generating a personalized newsfeed for each user. The system fetches recent posts from users they follow and ranks them by recency or popularity. Strategies include pre-generating feeds for users with many followers and using hybrid push/pull updates for users who follow many others. The architecture involves distributed databases for storing user follows and post metadata, with efficient querying and ranking algorithms. The system uses CDNs for efficient delivery of posts and intelligent caching to optimize metadata access. Redundancy and failover mechanisms ensure high availability and reliability, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of users and posts. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and posts. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)topic: Designing Instagram Feed  
-summary:  
-This document details the design of an Instagram feed, focusing on generating a personalized newsfeed for each user. The system fetches recent posts from users they follow and ranks them by recency or popularity. Strategies include pre-generating feeds for users with many followers and using hybrid push/pull updates for users who follow many others. The architecture involves distributed databases for storing user follows and post metadata, with efficient querying and ranking algorithms. The system uses CDNs for efficient delivery of posts and intelligent caching to optimize metadata access. Redundancy and failover mechanisms ensure high availability and reliability, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of users and posts. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and posts. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
 
 
-topic: Designing Twitter  
-summary:  
-The document details the design of a Twitter-like service, covering requirements for posting tweets, following users, marking tweets as favorites, and generating a timeline. The system is built to handle massive scale, with millions of users and tweets, and must ensure high availability and reliability. The architecture includes application servers behind load balancers, distributed databases for tweet and user data, and distributed file storage for media. The design process involves clarifying requirements, defining APIs (such as post_tweet, generate_timeline, and mark_tweet_favorite), and estimating scale (tweets per second, views per second). Data sharding is based on UserID or TweetID, with strategies to handle hot users and high read/write ratios. Caching and load balancing are critical for performance, with mechanisms to handle bottlenecks such as celebrity users or viral tweets. The system supports push notifications and trending topics, with options for pre-generated timelines and hybrid push/pull update strategies. Reliability is ensured through data replication and service redundancy, with failover mechanisms to maintain uptime during failures. The document discusses tradeoffs between different architectural choices, emphasizing the need to balance consistency, availability, and partition tolerance in distributed systems. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication and authorization. The design also covers monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and tweets. The document highlights the importance of intelligent caching, efficient querying, and real-time updates for a seamless user experience. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+# Topic: Distributed System Trade-offs
+**Archetype:** Governance_02 (Consistency Models)
 
+**Component_Mapping:**
+- **Component:** "CP System" | **Tech:** "MongoDB (Majority Write) / Etcd" | **Rationale:** "Prioritizes strong consistency and partition tolerance; will reject requests during a network partition to prevent data divergence."
+- **Component:** "AP System" | **Tech:** "Cassandra / DynamoDB" | **Rationale:** "Prioritizes availability and partition tolerance; returns stale data during a partition to ensure the system remains responsive."
+- **Component:** "PACELC Logic" | **Tech:** "Tunable Consistency" | **Rationale:** "Extends CAP to account for 'Else' (normal operation) trade-offs between Latency (L) and Consistency (C)."
 
-topic: Designing Twitter Search  
-summary:  
-This document focuses on designing a search feature for a Twitter-like service, enabling users to search tweets by keywords, hashtags, or user mentions. The system must handle high query volumes and deliver results with low latency. The architecture uses distributed indexing and search engines such as Elasticsearch to index tweets in real-time, ensuring up-to-date search results. Data is indexed as tweets are posted, with strategies to manage high-frequency updates and large volumes of tweets. The system supports advanced search features, including filtering by date, user, or location, and ranking results by relevance or recency. Caching and load balancing are employed to optimize performance, especially during spikes in search traffic. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of indexes and services to prevent single points of failure. The design also addresses scalability, allowing the system to grow with increasing numbers of tweets and users. Security measures include protecting search data and ensuring user privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in tweets and search queries. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+**Flow_Logic:**
+- [Partition Detected] -> [CP: Block Write] OR [AP: Allow Write with Conflict Resolution]
+- [Normal State] -> [Prioritize Low Latency] OR [Wait for Full Sync]
 
-topic: Designing Uber or Lyft  
-summary:  
-This document outlines the design of a ride-sharing service like Uber or Lyft, covering ride requests, driver matching, real-time location tracking, and payment processing. The system must handle high volumes of ride requests and ensure timely matching of drivers with riders. The architecture includes distributed databases for storing user and ride data, real-time messaging for driver-rider communication, and geolocation services for matching drivers with riders. The system supports high availability and reliability, with mechanisms for handling spikes in ride requests and ensuring data consistency. Caching and load balancing are used to optimize performance, with failover mechanisms to maintain uptime during failures. The design addresses scalability, allowing the system to grow with increasing numbers of users and rides. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and rides. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. The design also includes features for surge pricing, route optimization, and user feedback collection. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+**Connectivity:**
+- ["Client", "CP Database"]
+- ["Client", "AP Database"]
 
 
-topic: Designing a Web Crawler  
-summary:  
-This document details the design of a web crawler, which systematically browses the web to index pages for search engines or other data collection purposes. The system must efficiently discover, fetch, and parse web pages while respecting robots.txt and rate limits. The architecture includes distributed crawlers that coordinate via a central scheduler or distributed queue, ensuring balanced workload and avoiding overloading any single website. The crawler uses a URL frontier to manage discovered URLs and prioritize crawling based on relevance or depth. Data is stored in distributed databases or file systems for scalability and reliability. The system supports real-time updates and deduplication of pages, ensuring that each page is crawled only once. Caching and load balancing are employed to optimize performance, especially during spikes in crawl activity. Reliability is maintained through data replication and failover mechanisms, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of URLs and websites. Security considerations include protecting crawler data and ensuring privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in URLs and websites. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
 
 
-topic: Designing YouTube or Netflix  
-summary:  
-This document covers the design of a video-sharing service similar to YouTube or Netflix, focusing on uploading, sharing, viewing, and searching videos, as well as supporting likes/dislikes, views, and comments. The system is read-heavy, with a read:write ratio of about 200:1, requiring efficient handling of large volumes of video data. Videos are stored in distributed file storage (e.g., HDFS or GlusterFS) and can be resumed if uploads are interrupted. Video encoding is managed by a queue system, and the service supports multiple formats and resolutions for compatibility across devices. Deduplication and chunking uploads are used to optimize storage and bandwidth. The system uses CDNs for efficient video delivery and intelligent caching to optimize metadata access. Reliability is ensured through data replication and service redundancy, with multiple replicas of data and services to prevent single points of failure. The design addresses scalability, allowing the system to grow with increasing numbers of users and videos. Security considerations include protecting user data and ensuring privacy, with mechanisms for authentication and authorization. The document discusses monitoring and alerting for critical system components, as well as strategies for handling failures and performance degradation. The architecture is designed to scale horizontally, supporting future growth in users and videos. Intelligent caching and efficient querying are emphasized to provide a seamless user experience. The document also highlights tradeoffs between consistency, availability, and partition tolerance in distributed systems, ensuring a balance that meets the service's requirements. The system supports real-time updates and ensures high availability and reliability through data replication and service redundancy. [github](https://github.com/gitgik/distributed-system-design/blob/master/designing_instagram.md)
+# Topic: System Scaling & Partitioning
+**Archetype:** Scalability_03 (Resource Distribution)
+
+**Component_Mapping:**
+- **Component:** "Horizontal Scaler" | **Tech:** "Auto-scaling Cluster" | **Rationale:** "Increases capacity by adding more nodes, distributing load across a pool of commodity hardware."
+- **Component:** "Vertical Scaler" | **Tech:** "High-Spec Instance Upgrade" | **Rationale:** "Increases capacity of a single node (CPU/RAM); simpler to manage but limited by hardware ceilings and potential downtime."
+- **Component:** "Range Partitioner" | **Tech:** "Database Sharding" | **Rationale:** "Divides data into chunks based on a key range (e.g., A-M, N-Z); efficient for range queries but prone to 'hot spots'."
+- **Component:** "Hash Partitioner" | **Tech:** "Consistent Hashing" | **Rationale:** "Distributes data uniformly across shards using a hash function; prevents hot spots but makes range scans expensive."
+
+**Flow_Logic:**
+- [Request] -> [Load Balancer] -> [Horizontal Node Pool]
+- [Data Ingestion] -> [Hash Function] -> [Specific Database Shard]
+
+**Connectivity:**
+- ["Load Balancer", "Application Node"]
+- ["Application Service", "Database Shard"]
+
+
+
+# Topic: Distributed Agreement
+**Archetype:** Reliability_03 (Agreement Protocols)
+
+**Component_Mapping:**
+- **Component:** "Consensus Leader" | **Tech:** "Raft / Paxos" | **Rationale:** "Ensures all nodes agree on a single state transition, even in the presence of faulty nodes or network partitions."
+- **Component:** "Quorum Controller" | **Tech:** "Majority Voting (W + R > N)" | **Rationale:** "Guarantees strong consistency by ensuring the write set and read set overlap on at least one up-to-date node."
+
+**Flow_Logic:**
+- [Write Request] -> [Leader Node] -> [Log Append] -> [Follower Replication] -> [Quorum Acknowledged] -> [Commit]
+- [Read Request] -> [Contact R Nodes] -> [Compare Versions] -> [Return Latest]
+
+**Connectivity:**
+- ["Leader Node", "Follower Node"]
+- ["Application", "Quorum Controller"]
+
+
+
+
+
+# Topic: Operational Intelligence
+**Archetype:** Governance_03 (Observability)
+
+**Component_Mapping:**
+- **Component:** "SLO Tracker" | **Tech:** "Service Level Objectives" | **Rationale:** "Quantifies reliability targets (e.g., 99.9% uptime) to balance the speed of feature releases with system stability."
+- **Component:** "Metric Exporter" | **Tech:** "Prometheus Exporter" | **Rationale:** "Surfaces internal state (e.g., memory usage, queue depth) as numeric time-series data for real-time alerting."
+- **Component:** "Trace Provider" | **Tech:** "OpenTelemetry / Jaeger" | **Rationale:** "Captures the lifecycle of a single request across service boundaries to debug distributed latency spikes."
+
+**Flow_Logic:**
+- [Error Rate > SLO] -> [Trigger Alert] -> [SRE Investigation] -> [Analyze Traces] -> [Fix Root Cause]
+
+**Connectivity:**
+- ["Microservice", "Metrics Collector"]
+- ["Microservice", "Trace Collector"]
+- ["Alertmanager", "Notification Channel"]
+
+
+
+
+
+# Topic: Design Amazon: Online Shopping System
+**Archetype:** arch_01 (High-Volume Transactional / E-commerce)
+
+**Component_Mapping:**
+- **Component:** "Product Catalog" | **Tech:** "Elasticsearch / CloudSearch" | **Rationale:** "Enables high-performance full-text search and faceted filtering (category, price, rating) across millions of SKUs."
+- **Component:** "Shopping Cart" | **Tech:** "Redis / DynamoDB" | **Rationale:** "Provides low-latency access to transient session data; ensures the cart is highly available even if the main order DB is lagging."
+- **Component:** "Order Management" | **Tech:** "MySQL/PostgreSQL (Sharded)" | **Rationale:** "Requires ACID compliance to ensure transactional integrity during the checkout process and prevent double-charging."
+- **Component:** "Inventory Service" | **Tech:** "Distributed Lock / Redis" | **Rationale:** "Manages real-time stock levels and prevents overselling during high-traffic flash sales via atomic decrements."
+- **Component:** "Payment Gateway" | **Tech:** "Stripe / Braintree Integration" | **Rationale:** "Securely processes transactions and handles PCI-compliance; integrated via asynchronous webhooks for order status updates."
+
+**Data_Model:**
+- **Product_Table:** `{product_id: uuid, name: string, description: text, price: decimal, stock_count: int}` (Partitioned by Category)
+- **Order_Table:** `{order_id: uuid, user_id: uuid, status: enum, total_amount: decimal, items: json_blob}` (Sharded by UserID)
+- **Inventory_Log:** `{sku_id: uuid, change: int, transaction_id: uuid}`
+
+**Flow_Logic:**
+- [Search] -> [Search Service] -> [Elasticsearch] -> [Product Details]
+- [Add to Cart] -> [Cart Service] -> [Redis Cache]
+- [Checkout] -> [Order Service] -> [Inventory Check] -> [Payment Gateway] -> [Update Order Status] -> [Kafka Event]
+- [Post-Checkout] -> [Kafka] -> [Warehouse/Shipping Service] -> [Email Notification]
+
+**Scaling_Strategy:**
+- **Inventory Scaling:** Use a "Reserve-then-Commit" pattern to lock inventory during the 10-minute checkout window.
+- **Database Scaling:** Shard the Order Database by `user_id` to ensure that all orders for a single user are co-located, optimizing "My Orders" query performance.
+- **Traffic Spikes:** Implement "Queue-it" or buffer requests in SQS during flash sales to protect downstream checkout services from saturation.
+
+**Connectivity:**
+- ["User", "API Gateway"]
+- ["API Gateway", "Search Service"]
+- ["Search Service", "Elasticsearch"]
+- ["Order Service", "Inventory Service"]
+- ["Order Service", "Payment Gateway"]
+- ["Order Service", "Kafka"]
+- ["Kafka", "Shipping Service"]
+
+
+
+
+# Topic: Designing an API Rate Limiter
+**Archetype:** arch_03 (Security & Traffic Governance)
+
+**Component_Mapping:**
+- **Component:** "Request Interceptor" | **Tech:** "API Gateway (Envoy / Kong)" | **Rationale:** "Acts as the entry point to intercept incoming requests and enforce limits before they reach backend services."
+- **Component:** "Rate Limit Engine" | **Tech:** "Token Bucket / Sliding Window Algorithm" | **Rationale:** "Calculates if a request is within the allowed threshold based on pre-defined user or IP quotas."
+- **Component:** "Distributed Counter" | **Tech:** "Redis (In-Memory)" | **Rationale:** "Stores real-time request counts and timestamps; chosen for atomic increments (INCR) and high-speed lookups."
+- **Component:** "Rule Config Store" | **Tech:** "Relational DB (PostgreSQL) + Local Cache" | **Rationale:** "Stores per-tier or per-API limits; cached locally at the gateway to avoid DB roundtrips for every request."
+
+**Data_Model:**
+- **Rate_Limit_Key:** `Key: {user_id:api_endpoint} | Value: {count:int, start_time:timestamp}`
+- **Rules_Config:** `{client_tier: string, rps_limit: int, burst_size: int}`
+
+**Flow_Logic:**
+- [Request Received] -> [API Gateway] -> [Extract User Identifier] -> [Query Redis Counter]
+- [Decision Engine] -> [If Count < Limit: Increment Counter & Forward] -> [If Count >= Limit: Return 429 Too Many Requests]
+- [Background] -> [Sync Redis Replicas] -> [Update Rule Cache from Config DB]
+
+**Scaling_Strategy:**
+- **Local vs Global:** Implement local caching of counters for extremely high-traffic endpoints to reduce Redis contention (hybrid rate limiting).
+- **Partitioning:** Shard Redis cluster by `user_id` to ensure counters for a specific user are always handled by the same node, preventing race conditions.
+
+**Connectivity:**
+- ["User", "API Gateway"]
+- ["API Gateway", "Redis Cluster"]
+- ["API Gateway", "Rule Config Store"]
+- ["API Gateway", "Backend Services"]
+
+
+
+
+
+# Topic: Distributed Logging & Observability
+**Archetype:** arch_04 (Data Ingestion & Analytics)
+
+**Component_Mapping:**
+- **Component:** "Log Agent / Collector" | **Tech:** "Fluentbit / Filebeat" | **Rationale:** "Lightweight sidecar agents that tail log files and forward them to a central aggregator without impacting app performance."
+- **Component:** "Ingestion Buffer" | **Tech:** "Apache Kafka" | **Rationale:** "Acts as a shock absorber during log spikes, preventing the storage backend from being overwhelmed."
+- **Component:** "Log Indexer & Search" | **Tech:** "Elasticsearch / OpenSearch" | **Rationale:** "Provides full-text search and complex aggregation capabilities for rapid troubleshooting and auditing."
+- **Component:** "Visualization Layer" | **Tech:** "Kibana / Grafana" | **Rationale:** "Provides dashboards for real-time monitoring of error rates and log trends."
+
+**Data_Model:**
+- **Log_Document:** `{timestamp: iso8601, service_name: string, trace_id: uuid, level: enum, message: text, metadata: json}`
+- **Index_Strategy:** Time-based indices (e.g., `logs-2026-01-28`) to facilitate easy retention and deletion.
+
+**Flow_Logic:**
+- [Microservice] -> [Log Agent] -> [Kafka Topic]
+- [Log Ingestor Service] -> [Consume from Kafka] -> [Transform/Enrich] -> [Elasticsearch Index]
+- [Engineer] -> [Kibana Dashboard] -> [Query Elasticsearch]
+
+**Scaling_Strategy:**
+- **Tiered Storage:** Move old logs from SSD-backed Elasticsearch nodes to "Cold" storage (S3/HDFS) after 7 days to optimize costs.
+- **Index Sharding:** Shard Elasticsearch indices by `service_id` or `timestamp` to distribute the heavy write load across the cluster.
+
+**Connectivity:**
+- ["Microservice", "Log Agent"]
+- ["Log Agent", "Kafka"]
+- ["Kafka", "Log Ingestor Service"]
+- ["Log Ingestor Service", "Elasticsearch"]
+- ["Kibana", "Elasticsearch"]
+
+
+
+
+
+# Topic: Designing an E-ticketing Service
+**Archetype:** arch_05 (High-Concurrency Transactional)
+
+**Component_Mapping:**
+- **Component:** "Virtual Waiting Room" | **Tech:** "Redis-based Queue / Cloudflare Waiting Room" | **Rationale:** "Protects downstream services during 'on-sale' surges by throttling user access to the booking engine."
+- **Component:** "Seat Reservation Engine" | **Tech:** "Distributed Locking (Redis/Redlock)" | **Rationale:** "Ensures 'Exclusive Lock' on specific seats for a 5-10 minute window to prevent double-booking during checkout."
+- **Component:** "Event Metadata DB" | **Tech:** "PostgreSQL (Sharded by EventID)" | **Rationale:** "Provides ACID compliance for seat maps and ticket status; sharding by EventID prevents 'Hot Event' contention from affecting other events."
+- **Component:** "Payment Orchestrator" | **Tech:** "Stripe/Adyen + SQS" | **Rationale:** "Handles complex checkout flows; uses SQS to ensure that if the payment succeeds, the ticket is asynchronously generated and sent."
+
+**Data_Model:**
+- **Seat_Status:** `{event_id: uuid, seat_id: string, status: enum(Available, Locked, Sold), lock_expiry: timestamp}`
+- **Ticket_Entity:** `{ticket_id: uuid, user_id: uuid, event_id: uuid, qr_code_hash: string}`
+
+**Flow_Logic:**
+- [User Search] -> [Event Cache (Redis)] -> [Display Seat Map]
+- [Select Seat] -> [Distributed Lock (10m TTL)] -> [Update Status: Locked]
+- [Payment Success] -> [Update Status: Sold] -> [Clear Lock] -> [Generate Ticket]
+- [Lock Expired/Payment Fail] -> [Revert Status: Available]
+
+**Scaling_Strategy:**
+- **Concurrency Control:** Use pessimistic locking for seat selection but optimistic locking for general user profile updates to maximize throughput.
+- **Read Scaling:** Use read-replicas and CDNs for static event details and seat map images to offload the primary database.
+
+**Connectivity:**
+- ["User", "Waiting Room Service"]
+- ["Waiting Room Service", "Booking Service"]
+- ["Booking Service", "Redis (Distributed Lock)"]
+- ["Booking Service", "PostgreSQL (Event DB)"]
+- ["Booking Service", "Payment Gateway"]
+
+
+
+
+
+# Topic: Social Media Feed & Timeline Generation
+**Archetype:** arch_02 (Real-time Feed / High Read-Write)
+
+**Component_Mapping:**
+- **Component:** "Fan-out Service" | **Tech:** "Message Broker (Kafka) + Workers" | **Rationale:** "Delivers new posts to followers' pre-computed feeds; uses a 'Push' model for regular users and 'Pull' for celebrities to avoid thundering herds."
+- **Component:** "Timeline Cache" | **Tech:** "Redis (Sorted Sets)" | **Rationale:** "Stores the materialized feed (list of Post IDs) for active users to ensure <200ms latency on feed refreshes."
+- **Component:** "Metadata Store" | **Tech:** "Cassandra / ScyllaDB" | **Rationale:** "Stores user-post relationships and 'follows' data; handles high-volume writes and scales horizontally to PB levels."
+- **Component:** "Media Storage" | **Tech:** "Object Store (S3) + CDN (CloudFront)" | **Rationale:** "Decouples binary image/video data from metadata; CDN ensures low-latency delivery to a global user base."
+
+**Data_Model:**
+- **User_Feed:** `Key: UserID | Value: [ {PostID, Timestamp}, ... ]` (Stored in Redis)
+- **Follow_Graph:** `Source_UserID | Destination_UserID | Timestamp` (Partitioned by Source_UserID)
+- **Post_Metadata:** `{PostID, UserID, Content_URL, Lat/Long, Timestamp}`
+
+**Flow_Logic:**
+- [Post Tweet/Photo] -> [Write to Metadata DB] -> [Push to Fan-out Queue]
+- [Fan-out Worker] -> [Identify Followers] -> [Update Followers' Redis Timeline Caches]
+- [User Pulls Feed] -> [Read Redis Timeline Cache] -> [Hydrate Post Details from Metadata DB/Cache]
+
+**Scaling_Strategy:**
+- **Hybrid Fan-out:** Use "Push" (Write-side) for users with <5k followers; use "Pull" (Read-side) for Celebrities to prevent the system from trying to update 50M Redis caches simultaneously.
+- **Active User Optimization:** Only pre-compute timelines for users who have logged in within the last 30 days to save memory.
+
+**Connectivity:**
+- ["User", "API Gateway"]
+- ["API Gateway", "Feed Service"]
+- ["Feed Service", "Timeline Cache (Redis)"]
+- ["Fan-out Worker", "Timeline Cache (Redis)"]
+- ["Post Service", "Metadata Store (Cassandra)"]
+
+
+
+
+# Topic: Real-time Keyword & Hashtag Search
+**Archetype:** Search_01 (High-Ingestion Search)
+
+**Component_Mapping:**
+- **Component:** "Ingestion Pipeline" | **Tech:** "Kafka + Storm/Flink" | **Rationale:** "Streams new tweets/posts into the search indexer in real-time, enabling 'Trending Topic' detection within seconds."
+- **Component:** "Search Indexer" | **Tech:** "Elasticsearch / Lucene Shards" | **Rationale:** "Maintains an inverted index of keywords/hashtags; sharded by TweetID to distribute the heavy write-load of new posts."
+- **Component:** "Aggregator Service" | **Tech:** "Distributed Scatter-Gather" | **Rationale:** "Queries all search shards in parallel and merges the most relevant/recent results before returning to the user."
+
+**Data_Model:**
+- **Inverted_Index:** `Term: #Hashtag | List: [TweetID_1, TweetID_2, ...]`
+- **Trending_Buffer:** `Key: Word | Value: Count_Last_5_Mins` (Stored in Redis for real-time ranking)
+
+**Flow_Logic:**
+- [New Tweet] -> [Kafka] -> [Search Indexer] -> [Update Shards]
+- [User Searches Keyword] -> [Search API] -> [Scatter query to all Shards] -> [Gather & Rank Results] -> [Return to User]
+
+**Scaling_Strategy:**
+- **Time-based Sharding:** Create new search indices daily or hourly. Older indices can be moved to cheaper storage as the relevance of old tweets decreases.
+- **N-gram Indexing:** Support partial word searches and autocomplete by indexing word prefixes.
+
+**Connectivity:**
+- ["User", "Search API"]
+- ["Search API", "Elasticsearch Cluster"]
+- ["Kafka", "Search Indexer Service"]
+
+
+
+
+
+# Topic: Designing Uber or Lyft
+**Archetype:** arch_07 (Geospatial Real-time Matching)
+
+**Component_Mapping:**
+- **Component:** "Geospatial Index" | **Tech:** "Google S2 Geometry / Quadtree / H3" | **Rationale:** "Maps longitude/latitude into discrete cells to allow for fast 'nearby' queries to find drivers within a specific radius."
+- **Component:** "Location Tracker" | **Tech:** "WebSockets / gRPC" | **Rationale:** "Handles high-frequency GPS updates (every few seconds) from thousands of driver devices with low overhead."
+- **Component:** "Matching Engine" | **Tech:** "Distributed Scheduler" | **Rationale:** "Orchestrates the rider-to-driver assignment based on proximity, ETA, and driver rating."
+- **Component:** "Surge Pricing Engine" | **Tech:** "Apache Flink / Spark Streaming" | **Rationale:** "Analyzes real-time supply/demand density in specific geohashes to adjust pricing dynamically."
+
+**Data_Model:**
+- **Driver_Location:** `Key: Geohash | Value: [ {DriverID, LastCoord, Status}, ... ]` (Stored in Redis)
+- **Ride_Entity:** `{ride_id: uuid, rider_id: uuid, driver_id: uuid, status: enum, source: point, destination: point}`
+
+**Flow_Logic:**
+- [Ride Request] -> [Geospatial Service] -> [Query Nearby Drivers in Geohash]
+- [Matching Service] -> [Notify Driver via WebSocket] -> [Driver Accepts]
+- [Driver GPS Update] -> [Location Service] -> [Update Redis Geohash & Notify Rider]
+
+**Scaling_Strategy:**
+- **Geohash Sharding:** Shard the location database by Geohash/Region rather than UserID to ensure proximity queries hit only one or two shards.
+- **Write-Heavy Optimization:** Use an in-memory store (Redis) for GPS updates as historical precision is less critical than real-time speed.
+
+**Connectivity:**
+- ["Driver App", "Location Tracker (WebSocket)"]
+- ["Rider App", "API Gateway"]
+- ["Matching Engine", "Geospatial Index (Redis)"]
+- ["Payment Service", "Order DB (PostgreSQL)"]
+
+
+
+
+
+# Topic: Designing a Web Crawler
+**Archetype:** arch_08 (High-Parallelism Data Collection)
+
+**Component_Mapping:**
+- **Component:** "URL Frontier" | **Tech:** "Distributed Priority Queue (RabbitMQ / Kafka)" | **Rationale:** "Manages the list of URLs to be crawled; prioritizes based on page rank and ensures politeness (wait times per domain)."
+- **Component:** "HTML Fetcher" | **Tech:** "Headless Browsers / Async HTTP Clients" | **Rationale:** "Downloads page content at scale while respecting robots.txt and handling dynamic Javascript rendering."
+- **Component:** "Content Deduplicator" | **Tech:** "Bloom Filter / SimHash" | **Rationale:** "Efficiently checks if a page's content or URL has already been processed to prevent infinite loops and redundant storage."
+- **Component:** "Link Extractor" | **Tech:** "HTML Parser (BeautifulSoup / Cheerio)" | **Rationale:** "Parses fetched pages to discover new URLs and adds them back to the URL Frontier."
+
+**Data_Model:**
+- **Crawl_Status:** `{url_hash: long, status: enum, last_crawled: timestamp, content_hash: string}`
+- **Domain_Politeness:** `{domain: string, last_access: timestamp, delay_ms: int}`
+
+**Flow_Logic:**
+- [Scheduler] -> [Pop URL from Frontier] -> [Check Politeness] -> [Downloader Fetch]
+- [Downloader] -> [Deduplicate] -> [Store Content] -> [Extract Links] -> [Push New URLs to Frontier]
+
+**Scaling_Strategy:**
+- **Distributed Coordination:** Use a central coordinator (Zookeeper) to manage domain-level locks so multiple crawlers don't hit the same server simultaneously.
+- **DNS Caching:** Maintain a high-performance local DNS cache to avoid resolving the same domain thousands of times during a crawl.
+
+**Connectivity:**
+- ["Scheduler", "URL Frontier (Queue)"]
+- ["URL Frontier", "Downloader Fleet"]
+- ["Downloader", "Deduplication Service (Redis)"]
+- ["Downloader", "Storage (HDFS/S3)"]
+
+
+
+
+
+
+# Topic: Designing YouTube or Netflix
+**Archetype:** arch_01 (Ultra-High Read Volume / Media)
+
+**Component_Mapping:**
+- **Component:** "Transcoding Pipeline" | **Tech:** "Distributed Workers (FFmpeg / AWS Elemental)" | **Rationale:** "Converts uploaded raw video into multiple resolutions (1080p, 720p, 4K) and formats (HLS/DASH) for cross-device compatibility."
+- **Component:** "Video Storage" | **Tech:** "Object Store (S3 / GCS)" | **Rationale:** "Stores multi-terabyte video files with high durability and accessibility."
+- **Component:** "Metadata Service" | **Tech:** "MySQL (Read Replicas) / Vitess" | **Rationale:** "Manages video titles, descriptions, view counts, and comments; optimized for a 200:1 read:write ratio."
+- **Component:** "Content Delivery" | **Tech:** "CDN (Akamai / CloudFront)" | **Rationale:** "Caches video chunks at the network edge to provide buffer-free playback for global users."
+
+**Data_Model:**
+- **Video_Metadata:** `{video_id: uuid, user_id: uuid, title: string, s3_url: string, view_count: counter}`
+- **Video_Chunks:** `{video_id: uuid, resolution: string, chunk_index: int, cloudfront_url: string}`
+
+**Flow_Logic:**
+- [Upload] -> [API Gateway] -> [Storage (Raw)] -> [Transcoding Queue]
+- [Transcoding] -> [Generate Chunks] -> [Upload to S3] -> [Update CDN Cache]
+- [View] -> [Client Request] -> [Fetch Metadata] -> [Stream Chunks from Nearest CDN Node]
+
+**Scaling_Strategy:**
+- **Chunk-Based Streaming:** Use Adaptive Bitrate Streaming (ABR) to switch video quality dynamically based on the user's current internet speed.
+- **Write-Optimization:** Use a "Write-Back" cache for view counts (batch update the database every 1000 views) to prevent the metadata DB from being crushed by popular videos.
+
+**Connectivity:**
+- ["User", "CDN (Edge)"]
+- ["CDN", "Object Store (Origin)"]
+- ["Transcoder", "Object Store"]
+- ["Metadata Service", "Read-Replica DB"]
+
+
+
+
+

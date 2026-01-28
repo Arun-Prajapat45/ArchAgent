@@ -117,12 +117,15 @@ import json
 from pathlib import Path
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.document_loaders import TextLoader
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter, MarkdownHeaderTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain_classic.chains import RetrievalQA
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_classic.chains.retrieval import create_retrieval_chain
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
 
 from ..utils.models import CriticReview
 from ..utils.prompts import CriticPromptTemplate
@@ -164,10 +167,10 @@ class SystemDesignCriticRAG:
     # -------------------- Initialization --------------------
 
     def _init_embeddings(self):
-        return OpenAIEmbeddings(
-            api_key=os.getenv("LLM_KEY"),
-            base_url="https://openrouter.ai/api/v1",
-            model="text-embedding-ada-002",
+        return GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001", # ✅ Stable and supported
+            google_api_key=os.getenv("GEMINI_KEY"),
+            task_type="retrieval_document"
         )
 
     def _load_and_split_docs(self):
@@ -199,12 +202,10 @@ class SystemDesignCriticRAG:
         return vectorstore
 
     def _init_llm(self):
-        return ChatOpenAI(
-            model="deepseek/deepseek-chat",
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("LLM_KEY"),
-            temperature=0.3,
-            max_tokens=1024,
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            api_key=os.getenv("GEMINI_KEY"),
+            temperature=0
         )
 
     def _init_qa_chain(self):

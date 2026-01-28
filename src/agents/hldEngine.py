@@ -121,17 +121,41 @@
 #     print(result["result"])
 
 
-import os
+# import os
 import json
 from pathlib import Path
+# from dotenv import load_dotenv
+
+# from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# from langchain_community.document_loaders import TextLoader
+# from langchain.text_splitter import CharacterTextSplitter
+# from langchain_community.vectorstores import FAISS
+# from langchain.chains import RetrievalQA
+# from langchain_core.output_parsers import JsonOutputParser
+
+
+import os
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.document_loaders import TextLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+# 1. Partner Packages (Vendor-specific logic)
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
+# 2. Core (Abstract interfaces and LCEL)
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
+from pydantic import BaseModel, Field
+
+# 3. Community (Third-party integrations like FAISS and Loaders)
+from langchain_community.document_loaders import TextLoader
+from langchain_community.vectorstores import FAISS
+
+# 4. Text Splitters (Moved to a dedicated package)
+from langchain_text_splitters import CharacterTextSplitter, MarkdownHeaderTextSplitter
+
+# OLD: from langchain.chains import RetrievalQA
+# NEW (v1.0 compatibility):
+from langchain_classic.chains import RetrievalQA
+from langchain_classic.chains.retrieval import create_retrieval_chain
 
 from ..utils.models import SystemDesignSchema
 from ..utils.prompts import DesignGeneratorTemplate, DesignUpdateTemplate
@@ -171,21 +195,22 @@ class SystemDesignRAG:
     # -------------------- Initialization --------------------
 
     def _init_embeddings(self):
-        return OpenAIEmbeddings(
-            api_key=os.getenv("LLM_KEY"),
-            base_url="https://openrouter.ai/api/v1",
-            model="text-embedding-ada-002",
+        return GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001", # ✅ Stable and supported
+            google_api_key=os.getenv("GEMINI_KEY"),
+            task_type="retrieval_document"
         )
 
     def _load_and_split_docs(self):
         loader = TextLoader(str(self.raw_data_dir / "combined.txt"))
         documents = loader.load()
+        headers_to_split_on = [
+            ("#", "Header 1"),
+        ]
 
-        splitter = CharacterTextSplitter(
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
-        )
-        docs = splitter.split_documents(documents)
+        markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+        docs = markdown_splitter.split_text(documents[0].page_content)
+        # docs = splitter.split_documents(documents)
         print(f"Loaded {len(docs)} document chunks.")
         return docs
 
@@ -206,13 +231,12 @@ class SystemDesignRAG:
         return vectorstore
 
     def _init_llm(self):
-        return ChatOpenAI(
-            model="deepseek/deepseek-chat",
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("LLM_KEY"),
-            temperature=0.3,
-            max_tokens=1024,
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            api_key=os.getenv("GEMINI_KEY"),
+            temperature=0
         )
+
 
     def _init_qa_chain(self):
         return RetrievalQA.from_chain_type(
