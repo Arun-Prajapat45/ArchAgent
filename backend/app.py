@@ -63,6 +63,87 @@ def dict_to_markdown(data, level=2):
     return md
 
 
+
+import os
+import requests
+
+class InfrastructureCostEstimator:
+    def __init__(self, api_key):
+        self.api_url = "https://pricing.api.infracost.io/graphql"
+        # FIXED: Removed quotes around api_key variable
+        self.headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
+        
+        # Mapping with specific filters to ensure the API finds a valid product
+        self.sku_map = {
+            "Cassandra (NoSQL)": {"service": "AmazonMCS", "attr": []},
+            "Kafka": {"service": "AmazonMSK", "attr": [{"key": "instanceType", "value": "kafka.m5.large"}]},
+            "Redis": {"service": "AmazonElastiCache", "attr": [{"key": "instanceType", "value": "cache.t3.medium"}]},
+            "AWS EKS (Kubernetes)": {"service": "AmazonEKS", "attr": []},
+            "API Gateway (Amazon API Gateway)": {"service": "AmazonApiGateway", "attr": []},
+            "AWS Lambda (Serverless)": {"service": "AWSLambda", "attr": [{"key": "usageType", "value": "Request"}]}
+        }
+
+    def get_price(self, service_name, attributes, region="us-east-1"):
+        query = """
+        query ($filter: ProductFilter!) {
+          products(filter: $filter) {
+            prices(filter: { purchaseOption: "on_demand" }) {
+              USD
+              unit
+            }
+          }
+        }
+        """
+        # Inject custom attribute filters (like instanceType) to get a real result
+        variables = {
+            "filter": {
+                "vendorName": "aws", 
+                "service": service_name, 
+                "region": region,
+                "attributeFilters": attributes
+            }
+        }
+        
+        try:
+            response = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.headers)
+            data = response.json()
+            # Most prices come back as strings, convert to float
+            price_str = data['data']['products'][0]['prices'][0]['USD']
+            return float(price_str)
+        except (IndexError, KeyError, Exception):
+            return 0.0
+
+    def estimate_from_hld(self, hld_json):
+        total_monthly = 0
+        details = []
+        
+        for item in hld_json.get("tech_stack", []):
+            tech = item['technology']
+            config = self.sku_map.get(tech)
+            
+            if config:
+                unit_price = self.get_price(config['service'], config['attr'])
+                
+                # Logic to estimate a "Monthly" cost from unit price
+                if tech == "AWS Lambda (Serverless)":
+                    # Estimate based on 10 Million requests
+                    monthly = unit_price * 10 
+                elif tech == "API Gateway (Amazon API Gateway)":
+                    # Estimate based on 10 Million requests (usually $3.50 per 1M)
+                    monthly = unit_price * 10
+                else:
+                    # Standard 730 hours for an instance
+                    monthly = unit_price * 730
+                
+                if monthly > 0:
+                    total_monthly += monthly
+                    details.append(f"✅ {tech}: ~${monthly:.2f}/mo")
+                else:
+                    details.append(f"⚠️ {tech}: Price not found (using default $0)")
+        
+        return total_monthly, details
+
+
 # --- API ENDPOINT ---
 @app.post("/chat")
 async def chat_endpoint(
@@ -86,10 +167,18 @@ async def chat_endpoint(
     print(final_state['output_code'])
     requirements_md = dict_to_markdown(final_state["system_requirements"])
     design_md = dict_to_markdown(final_state["system_design"])
+    api_key = '[REDACTED]' 
+    estimator = InfrastructureCostEstimator(api_key=api_key)
+    cost, breakdown = estimator.estimate_from_hld(final_state['system_design'])
 
+
+    # print(f"--- TOTAL ESTIMATED COST: ${cost:.2f}/mo ---")
+    # for line in breakdown:
+    #     print(line)
     return {
         "thread_id": thread_id,
         "output_requirements": requirements_md,
         "output_design": design_md,
         "output_code": final_state["output_code"],
+        "cost_breakdown":breakdown
     }
