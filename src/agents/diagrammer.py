@@ -50,8 +50,8 @@ import os
 from langchain_classic.schema import StrOutputParser
 from ..utils.prompts import DiagrammerPromptTemplate
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
-
+# from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 class ArchitectureDiagrammer:
     def __init__(self, prompt, model_name="", temperature=0.3):
         """
@@ -64,10 +64,18 @@ class ArchitectureDiagrammer:
         """
         load_dotenv()
         
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            api_key=os.getenv("GEMINI_KEY"),
-            temperature=0
+        self.llm = ChatOpenAI(
+            # The specific ID for the free version on OpenRouter
+            model="meta-llama/llama-3.3-70b-instruct:free", 
+            
+            # Your OpenRouter API Key
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            
+            # Point LangChain to OpenRouter's servers
+            base_url="https://openrouter.ai/api/v1",
+            
+            # Model specific settings
+            temperature=0.15 # Recommended for Trinity Mini
         )
 
         

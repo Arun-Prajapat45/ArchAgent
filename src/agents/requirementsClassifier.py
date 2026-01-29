@@ -212,7 +212,9 @@ load_dotenv()
 
 
 import os
+import pickle
 from pathlib import Path
+from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 # from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_classic.retrievers import ParentDocumentRetriever
@@ -222,8 +224,8 @@ from langchain_classic.chains import RetrievalQA
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_community.document_loaders import TextLoader
 # from langch
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
+# from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings
 
 class RequirementsRAG:
     def __init__(
@@ -269,40 +271,100 @@ class RequirementsRAG:
 
         # 6. Final Chain setup
         self.qa_chain = self._init_qa_chain()
+        self.vectorstore_path="faiss_idx_requirments_2"
 
     def _init_embeddings(self):
-        return GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", # ✅ Stable and supported
-            google_api_key=os.getenv("GEMINI_KEY"),
-            task_type="retrieval_document"
+        embeddings = OpenAIEmbeddings(
+            model="openai/text-embedding-3-small", # Or your preferred model
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1"
         )
+        return embeddings
 
     def _init_llm(self):
-        return ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            api_key=os.getenv("GEMINI_KEY"),
-            temperature=0
+        return ChatOpenAI(
+            # The specific ID for the free version on OpenRouter
+            model="meta-llama/llama-3.3-70b-instruct:free", 
+            
+            # Your OpenRouter API Key
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            
+            # Point LangChain to OpenRouter's servers
+            base_url="https://openrouter.ai/api/v1",
+            
+            # Model specific settings
+            temperature=0.15 # Recommended for Trinity Mini
         )
 
+    # def _init_vectorstore_base(self):
+    #     """Initializes a blank vectorstore to be managed by the ParentDocumentRetriever."""
+    #     # FAISS needs at least one document to initialize if loading is not an option
+    #     return FAISS.from_texts(["initialization"], self.embeddings)
+
+    # def _ingest_data(self):
+    #     """Handles the manual parent-child ingestion logic."""
+    #     file_path = self.raw_data_dir / self.file_name
+    #     print(f"Ingesting data from {file_path}...")
+        
+    #     with open(file_path, "r", encoding="utf-8") as f:
+    #         raw_text = f.read()
+
+    #     # Split into parent documents based on Markdown headers
+    #     parent_docs = self.header_splitter.split_text(raw_text)
+        
+    #     # This creates the child chunks and maps them to parents in self.store
+    #     self.retriever.add_documents(parent_docs, ids=None)
+    #     print(f"Successfully indexed {len(parent_docs)} archetypes.")
+
+
     def _init_vectorstore_base(self):
-        """Initializes a blank vectorstore to be managed by the ParentDocumentRetriever."""
-        # FAISS needs at least one document to initialize if loading is not an option
+        """Loads vectorstore from disk or initializes a blank one."""
+        self.vectorstore_path="faiss_index_requirements_x"
+        if os.path.exists(self.vectorstore_path):
+            print("Loading existing vectorstore from disk...")
+            return FAISS.load_local(
+                self.vectorstore_path, 
+                self.embeddings, 
+                allow_dangerous_deserialization=True # Required for loading FAISS files
+            )
+        
+        print("No vectorstore found. Initializing new one.")
         return FAISS.from_texts(["initialization"], self.embeddings)
 
     def _ingest_data(self):
-        """Handles the manual parent-child ingestion logic."""
+        """Ingests data only if the vectorstore is new."""
+        store_file = Path(self.vectorstore_path) / "parent_store.pkl"
+        
+        # Check if we already have data
+        if os.path.exists(self.vectorstore_path) and store_file.exists():
+            print("Loading parent documents from disk...")
+            with open(store_file, "rb") as f:
+                full_dict = pickle.load(f)
+                # Re-populate the InMemoryStore
+                self.store.mset(list(full_dict.items()))
+            return
+
+        # Otherwise, perform the ingestion
         file_path = self.raw_data_dir / self.file_name
         print(f"Ingesting data from {file_path}...")
         
         with open(file_path, "r", encoding="utf-8") as f:
             raw_text = f.read()
 
-        # Split into parent documents based on Markdown headers
         parent_docs = self.header_splitter.split_text(raw_text)
+        self.retriever.add_documents(parent_docs)
         
-        # This creates the child chunks and maps them to parents in self.store
-        self.retriever.add_documents(parent_docs, ids=None)
-        print(f"Successfully indexed {len(parent_docs)} archetypes.")
+        # --- SAVE TO DISK ---
+        # 1. Save the FAISS index
+        self.vectorstore.save_local(self.vectorstore_path)
+        
+        # 2. Save the Parent Store (InMemoryStore)
+        os.makedirs(self.vectorstore_path, exist_ok=True)
+        with open(store_file, "wb") as f:
+            # We access the underlying dict of the InMemoryStore to pickle it
+            pickle.dump(self.store.store, f)
+            
+        print(f"Successfully indexed and saved to {self.vectorstore_path}")
 
     def _init_qa_chain(self):
         return RetrievalQA.from_chain_type(

@@ -138,8 +138,8 @@ import os
 from dotenv import load_dotenv
 
 # 1. Partner Packages (Vendor-specific logic)
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
+# from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings
 # 2. Core (Abstract interfaces and LCEL)
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -151,7 +151,7 @@ from langchain_community.vectorstores import FAISS
 
 # 4. Text Splitters (Moved to a dedicated package)
 from langchain_text_splitters import CharacterTextSplitter, MarkdownHeaderTextSplitter
-
+from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 # OLD: from langchain.chains import RetrievalQA
 # NEW (v1.0 compatibility):
 from langchain_classic.chains import RetrievalQA
@@ -191,15 +191,17 @@ class SystemDesignRAG:
         self.parser = JsonOutputParser(
             pydantic_object=SystemDesignSchema
         )
+        self.vectorstore_path="faiss_idx_hld_2"
 
     # -------------------- Initialization --------------------
 
     def _init_embeddings(self):
-        return GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", # ✅ Stable and supported
-            google_api_key=os.getenv("GEMINI_KEY"),
-            task_type="retrieval_document"
+        embeddings = OpenAIEmbeddings(
+            model="openai/text-embedding-3-small", # Or your preferred model
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1"
         )
+        return embeddings
 
     def _load_and_split_docs(self):
         loader = TextLoader(str(self.raw_data_dir / "combined.txt"))
@@ -231,10 +233,18 @@ class SystemDesignRAG:
         return vectorstore
 
     def _init_llm(self):
-        return ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            api_key=os.getenv("GEMINI_KEY"),
-            temperature=0
+        return ChatOpenAI(
+            # The specific ID for the free version on OpenRouter
+            model="meta-llama/llama-3.3-70b-instruct:free", 
+            
+            # Your OpenRouter API Key
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            
+            # Point LangChain to OpenRouter's servers
+            base_url="https://openrouter.ai/api/v1",
+            
+            # Model specific settings
+            temperature=0.15 # Recommended for Trinity Mini
         )
 
 

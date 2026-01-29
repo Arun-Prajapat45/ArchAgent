@@ -85,6 +85,8 @@ Task: Architect a production-ready system based strictly on the provided technic
 
 Constraint: Output ONLY a valid JSON object. Do not include conversational text, markdown formatting outside the JSON, or explanations.
 
+make sure there are no dead ends in the connectivity_matrices (data going to a component should come out)
+
 Technical_Spec: >
 Architecture type: {archetype}
 Core Actions: {core_action}
@@ -498,12 +500,15 @@ Generate a valid Mermaid FLOWCHART diagram based on the Architecture JSON.
    - Queues/Streams (Kafka/RabbitMQ): Use subroutine syntax: `id[[Label]]`
    - External APIs/WebSockets: Use rhomboid or stadium shapes: `id([Label])`
    - Standard Services: Use square brackets: `id[Label]`
-
+   - Don't create subgraphs
 ### FLOW RULES
 1. Use directed edges `-->` for request flow.
 2. For async processes (e.g., Kafka to Service), use dotted lines `-.->` to distinguish from synchronous API calls.
 3. Ensure the 'User' is the entry point at the top.
-
+4. double parentheses not allowed (eg: ES[(Search Indexer (Elasticsearch))] not allowed, ES[(Search Indexer Elasticsearch)] allowed).
+5. AB[ some information (CD)] also not allowed, use AB[ (some information CD)]
+6. There shouldn't be repeating edges to same nodes
+                                                          
 ### STYLING & APPEARANCE (PRIORITY)
 1. Use specific hex codes for professional look:
    - User: #ADD8E6 (Light Blue)

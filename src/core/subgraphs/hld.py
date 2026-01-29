@@ -40,12 +40,15 @@ def _init(state: hldState) -> dict: # Return dict, not hldState object
 def Design(state: hldState) -> dict:
     """Build or update the design."""
     current_iteration = state.get('num_iterations', 0) + 1
-    
+    # print(current_iteration)
     if current_iteration == 1:
         print("creating first design...")
         output = state['generator'].generate_design(state['goal'])
+        
     else:
-        print(f"update the design... iteration:{current_iteration}",current_iteration)
+        print(f"update the design... iteration:{current_iteration}")
+        print("reviewing design...")
+        # review = state['critic'].review_design(state['generator_output'])
         output = state['generator'].update_design(
             state['goal'], 
             state['generator_output'], 
@@ -66,6 +69,7 @@ def evaluate(state: hldState) -> dict:
 def should_continue(state: hldState) -> Literal["continue", "end"]:
     # Use the consistent variable name here
     if state["num_iterations"] >= 3:
+        print("finalizing design")
         return "end"
     return "continue"
 
@@ -73,19 +77,26 @@ def should_continue(state: hldState) -> Literal["continue", "end"]:
 
 
 def hldBuilder():
-    workflow=StateGraph(hldState);
-    workflow.add_node("init",_init)
-    workflow.add_node("evaluate",evaluate)
-    workflow.add_node("design",Design)
-    workflow.add_edge(START,"init")
+    workflow = StateGraph(hldState)
+    
+    workflow.add_node("init", _init)
+    workflow.add_node("design", Design)
+    workflow.add_node("evaluate", evaluate) # Review happens here
+    
+    workflow.add_edge(START, "init")
+    workflow.add_edge("init", "design")
+    workflow.add_edge("design", "evaluate") # After designing, always evaluate
+    
+    # After evaluation, decide if we need more iterations
     workflow.add_conditional_edges(
-        "init",
+        "evaluate",
         should_continue,
         {
-            "continue":"design",
-            "end":END
+            "continue": "design", # Loop back to design
+            "end": END
         }
     )
+    
     return workflow.compile()
 
 

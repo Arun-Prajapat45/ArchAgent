@@ -116,7 +116,7 @@ import os
 import json
 from pathlib import Path
 from dotenv import load_dotenv
-
+from langchain_openai import ChatOpenAI,OpenAIEmbeddings
 # from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter, MarkdownHeaderTextSplitter
@@ -124,8 +124,8 @@ from langchain_community.vectorstores import FAISS
 from langchain_classic.chains import RetrievalQA
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_classic.chains.retrieval import create_retrieval_chain
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
+# from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings
 
 from ..utils.models import CriticReview
 from ..utils.prompts import CriticPromptTemplate
@@ -163,15 +163,17 @@ class SystemDesignCriticRAG:
         self.parser = JsonOutputParser(
             pydantic_object=CriticReview
         )
+        self.vectorstore_path="faiss_index_hld_x"
 
     # -------------------- Initialization --------------------
 
     def _init_embeddings(self):
-        return GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", # ✅ Stable and supported
-            google_api_key=os.getenv("GEMINI_KEY"),
-            task_type="retrieval_document"
+        embeddings = OpenAIEmbeddings(
+            model="openai/text-embedding-3-small", # Or your preferred model
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1"
         )
+        return embeddings
 
     def _load_and_split_docs(self):
         loader = TextLoader(str(self.raw_data_dir / "combined.txt"))
@@ -186,6 +188,7 @@ class SystemDesignCriticRAG:
         return docs
 
     def _init_vectorstore(self):
+        
         if os.path.exists(self.vectorstore_path):
             print("Loading critic vector store from disk...")
             return FAISS.load_local(
@@ -202,10 +205,18 @@ class SystemDesignCriticRAG:
         return vectorstore
 
     def _init_llm(self):
-        return ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            api_key=os.getenv("GEMINI_KEY"),
-            temperature=0
+        return ChatOpenAI(
+            # The specific ID for the free version on OpenRouter
+            model="meta-llama/llama-3.3-70b-instruct:free", 
+            
+            # Your OpenRouter API Key
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            
+            # Point LangChain to OpenRouter's servers
+            base_url="https://openrouter.ai/api/v1",
+            
+            # Model specific settings
+            temperature=0.15 # Recommended for Trinity Mini
         )
 
     def _init_qa_chain(self):

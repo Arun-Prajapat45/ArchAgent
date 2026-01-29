@@ -11,12 +11,11 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     git \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# ---- Working directory ----
 WORKDIR /app
 
-# ---- Upgrade pip ----
 RUN pip install --upgrade pip setuptools wheel
 
 # ---- Core Python packages ----
@@ -28,8 +27,15 @@ RUN pip install \
     langchain \
     langchain-core \
     langchain-community \
-    langchain-google-genai \
-    langgraph
+    langgraph \
+    fastapi \
+    uvicorn \
+    psycopg[binary] \
+    psycopg-pool \
+    fastapi[standard] \
+    faiss-cpu \
+    langchain-openai  
 
-# ---- Default command ----
-CMD ["bash"]
+COPY . .
+
+CMD ["fastapi", "dev", "backend/app.py", "--host", "0.0.0.0", "--port", "8000"]
