@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "archagent"
+version = "0.1.0"
+description = "RAG-assisted multi-agent system design service"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [{name = "Akshat Sharma"}]
+dependencies = [
+  "fastapi==0.116.1",
+  "httpx==0.28.1",
+  "pydantic==2.11.7",
+  "pydantic-settings==2.10.1",
+  "python-dotenv==1.1.1",
+  "requests==2.32.5",
+  "uvicorn[standard]==0.35.0",
+  "langchain==0.3.27",
+  "langchain-community==0.3.29",
+  "langchain-openai==0.3.32",
+  "langchain-text-splitters==0.3.9",
+  "langgraph==0.6.6",
+  "faiss-cpu==1.11.0.post1",
+  "tiktoken==0.11.0",
+  "streamlit==1.49.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "bandit==1.8.6",
+  "detect-secrets==1.5.0",
+  "mypy==1.17.1",
+  "pip-audit==2.9.0",
+  "pytest==8.4.2",
+  "pytest-cov==6.2.1",
+  "ruff==0.12.11",
+  "types-requests==2.32.4.20250809",
+]
+
+[tool.setuptools.packages.find]
+include = ["backend*", "src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --disable-warnings --strict-markers"
+markers = ["external: tests requiring paid/network services (excluded by default)"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+exclude = ["data", "faiss_index_requirements_x"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["backend"]
+strict = true
+ignore_missing_imports = true
