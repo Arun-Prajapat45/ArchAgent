@@ -1,9 +1,42 @@
+# Environment and credentials
 .env
-req.txt
-*.json
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Tests and quality tools
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.bandit/
+
+# Generated retrieval indexes (rebuild locally from data/raw)
+faiss_index*/
+faiss_idx*/
+data/db/
+*.faiss
+*.pkl
+
+# Local artifacts and editors
 *.zip
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local source corpora not distributed with the project
 awesome-scalability-master/
 distributed-system-design-master/
 from perplexity/
-__pycache__
 temp/

@@ -1,0 +1,6 @@
+[allowlist]
+description = "Ignore generated and local dependency directories"
+paths = [
+  '''(^|/)\.venv/''',
+  '''(^|/)data/raw/''',
+]
