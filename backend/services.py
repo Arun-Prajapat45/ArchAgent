@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from backend.mermaid import normalize_mermaid
 
@@ -32,5 +32,5 @@ class LegacyGraphService:
 
 def _as_dict(value: Any) -> dict[str, Any]:
     if hasattr(value, "model_dump"):
-        return value.model_dump()
-    return dict(value)
+        return cast(dict[str, Any], value.model_dump())
+    return cast(dict[str, Any], dict(value))

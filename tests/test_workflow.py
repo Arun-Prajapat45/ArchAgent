@@ -32,7 +32,9 @@ class Diagrammer:
 def test_pipeline_routes_requirements_design_critique_diagram() -> None:
     designer = Designer()
     critic = Critic()
-    pipeline = Pipeline(Requirements(), CritiqueLoop(designer, critic, max_iterations=3), Diagrammer())
+    pipeline = Pipeline(
+        Requirements(), CritiqueLoop(designer, critic, max_iterations=3), Diagrammer()
+    )
 
     result = pipeline.run("Build chat")
 

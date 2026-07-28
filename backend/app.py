@@ -128,7 +128,9 @@ def create_app(
                 while timestamps and now - timestamps[0] >= 60:
                     timestamps.popleft()
                 if len(timestamps) >= config.rate_limit_per_minute:
-                    return error_response(429, "rate_limit_exceeded", "Too many requests", request_id)
+                    return error_response(
+                        429, "rate_limit_exceeded", "Too many requests", request_id
+                    )
                 timestamps.append(now)
             response = await call_next(request)
             response.headers["X-Request-ID"] = request_id
@@ -140,7 +142,10 @@ def create_app(
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
         del request, exc
         return error_response(
-            422, "validation_error", "Request body does not match the API schema", request_id_context.get()
+            422,
+            "validation_error",
+            "Request body does not match the API schema",
+            request_id_context.get(),
         )
 
     @application.exception_handler(Exception)

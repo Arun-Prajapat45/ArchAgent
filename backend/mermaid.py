@@ -7,7 +7,9 @@ class MermaidValidationError(ValueError):
     pass
 
 
-_ALLOWED_START = re.compile(r"^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram-v2|erDiagram)\b")
+_ALLOWED_START = re.compile(
+    r"^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram-v2|erDiagram)\b"
+)
 
 
 def normalize_mermaid(text: str) -> str:

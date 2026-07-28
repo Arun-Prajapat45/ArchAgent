@@ -6,8 +6,10 @@ from typing import Any
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from backend.mermaid import normalize_mermaid
+
 from ..utils.prompts import DiagrammerPromptTemplate
 
 
@@ -19,10 +21,10 @@ class ArchitectureDiagrammer:
                 raise RuntimeError("OPENROUTER_API_KEY is required")
             llm = ChatOpenAI(
                 model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
-                api_key=api_key,
+                api_key=SecretStr(api_key),
                 base_url="https://openrouter.ai/api/v1",
                 temperature=0.1,
-                request_timeout=45,
+                timeout=45,
                 max_retries=2,
             )
         self.chain = prompt | llm | StrOutputParser()

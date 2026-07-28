@@ -28,9 +28,18 @@ class InfracostClient:
         self.timeout_seconds = timeout_seconds
         self.session = session or requests.Session()
 
-    def get_price(self, service_name: str, attributes: list[dict[str, str]], region: str = "us-east-1") -> tuple[float, str]:
+    def get_price(
+        self, service_name: str, attributes: list[dict[str, str]], region: str = "us-east-1"
+    ) -> tuple[float, str]:
         query = """query ($filter: ProductFilter!) { products(filter: $filter) { prices(filter: { purchaseOption: "on_demand" }) { USD unit } } }"""
-        variables = {"filter": {"vendorName": "aws", "service": service_name, "region": region, "attributeFilters": attributes}}
+        variables = {
+            "filter": {
+                "vendorName": "aws",
+                "service": service_name,
+                "region": region,
+                "attributeFilters": attributes,
+            }
+        }
         try:
             response = self.session.post(
                 self.API_URL,

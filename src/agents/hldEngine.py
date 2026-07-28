@@ -9,6 +9,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
+from pydantic import SecretStr
 
 from ..utils.models import SystemDesignSchema
 from ..utils.prompts import DesignGeneratorTemplate, DesignUpdateTemplate
@@ -31,20 +32,24 @@ class SystemDesignRAG:
             raise RuntimeError("OPENROUTER_API_KEY is required")
         embeddings = OpenAIEmbeddings(
             model=os.getenv("OPENROUTER_EMBEDDING_MODEL", "openai/text-embedding-3-small"),
-            api_key=api_key,
+            api_key=SecretStr(api_key),
             base_url="https://openrouter.ai/api/v1",
-            request_timeout=15,
+            timeout=15,
             max_retries=2,
         )
         documents = TextLoader(str(raw_data_dir / "combined.txt"), encoding="utf-8").load()
-        chunks = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap).split_documents(documents)
-        self.retriever = FAISS.from_documents(chunks, embeddings).as_retriever(search_kwargs={"k": top_k})
+        chunks = CharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        ).split_documents(documents)
+        self.retriever = FAISS.from_documents(chunks, embeddings).as_retriever(
+            search_kwargs={"k": top_k}
+        )
         llm = ChatOpenAI(
             model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
-            api_key=api_key,
+            api_key=SecretStr(api_key),
             base_url="https://openrouter.ai/api/v1",
             temperature=0.15,
-            request_timeout=45,
+            timeout=45,
             max_retries=2,
         )
         self.structured_llm = llm.with_structured_output(SystemDesignSchema)
@@ -65,9 +70,10 @@ class SystemDesignRAG:
             functional=data["requirements_summary"]["functional"],
             non_functional=data["requirements_summary"]["non_functional"],
         )
-        return self.structured_llm.invoke(
+        result = self.structured_llm.invoke(
             f"{prompt}\n\nRetrieved context:\n{self._context(prompt)}"
         )
+        return SystemDesignSchema.model_validate(result)
 
     def update_design(self, goal: Any, current: Any, feedback: Any) -> SystemDesignSchema:
         goal_data = goal.model_dump() if hasattr(goal, "model_dump") else goal
@@ -78,6 +84,7 @@ class SystemDesignRAG:
             hld_output_json=json.dumps(current_data),
             critic_feedback_json=json.dumps(feedback_data),
         )
-        return self.structured_llm.invoke(
+        result = self.structured_llm.invoke(
             f"{prompt}\n\nRetrieved context:\n{self._context(prompt)}"
         )
+        return SystemDesignSchema.model_validate(result)

@@ -15,7 +15,9 @@ def test_infracost_request_has_timeout_and_parses_price() -> None:
     session = Mock()
     response = Mock()
     response.raise_for_status.return_value = None
-    response.json.return_value = {"data": {"products": [{"prices": [{"USD": "0.42", "unit": "hour"}]}]}}
+    response.json.return_value = {
+        "data": {"products": [{"prices": [{"USD": "0.42", "unit": "hour"}]}]}
+    }
     session.post.return_value = response
     client = InfracostClient("key", timeout_seconds=7.0, session=session)
     assert client.get_price("AmazonEKS", []) == (0.42, "hour")

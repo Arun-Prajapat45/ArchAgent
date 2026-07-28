@@ -1,10 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-
 ################################################################
 #### for requirements classifier ##############################
 ###############################################################
-
 
 
 RequirementsQuery = """Role: Senior Systems Architect 
@@ -57,28 +55,11 @@ JSON Schema Requirements:
 }}"""
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ###############################################################################
 ######### for hld engine ######################################################
 ###############################################################################
 
-DesignGeneratorTemplate="""
+DesignGeneratorTemplate = """
 Role: Principal Infrastructure Architect.
 
 Task: Architect a production-ready system based strictly on the provided technical specifications and documents fetched by the retriver
@@ -155,7 +136,6 @@ JSON Schema Requirement: Your output must follow this exact structure:
 """
 
 
-
 # DesignUpdateTemplate="""
 
 # Role: Senior Systems Architect (Refinement Mode)
@@ -178,10 +158,10 @@ JSON Schema Requirement: Your output must follow this exact structure:
 
 # Strict Adherence: Do not ignore the Critic's remediation suggestions unless they violate the core action of the system.
 
-# JSON Schema Requirement: Your output must follow this exact structure: 
+# JSON Schema Requirement: Your output must follow this exact structure:
 # {{
 #   "system_name": "[Insert official name of the system being designed]",
-  
+
 #   "system_architecture_style": {{
 #     "pattern": "e.g., Microservices / Monolith / Serverless",
 #     "rationale": "Why this pattern fits the RPS/User requirements"
@@ -217,7 +197,7 @@ JSON Schema Requirement: Your output must follow this exact structure:
 #       "[Step 1: Origin]",
 #       "[Step 2: Retrieval/Cache Logic]",
 #       "[Step 3: Client Response]"
-#     ], 
+#     ],
 #     // add other read requests requests
 #   }},
 #   "slo_engineering": {{
@@ -235,10 +215,7 @@ JSON Schema Requirement: Your output must follow this exact structure:
 # """
 
 
-
-
-
-DesignUpdateTemplate="""
+DesignUpdateTemplate = """
 Role: Senior Systems Architect (Surgical Refinement Mode)
 
 Context: 
@@ -332,16 +309,13 @@ JSON Schema Requirement: Your output must follow this exact structure:
 """
 
 
-
-
-
 ###################################################################################
 ### hld critic #############################################################
 ##################################################################################
 
 
 # CriticPromptTemplate="""
-# Role: You are a Principal Systems Architect. 
+# Role: You are a Principal Systems Architect.
 # Review the following HLD JSON and provide a detailed architectural critique. Your goal is to find 'Architectural Hallucinations' and 'Scaling Anti-patterns'.
 
 # Evaluate the HLD based on these criteria:
@@ -381,7 +355,7 @@ JSON Schema Requirement: Your output must follow this exact structure:
 # """
 
 
-CriticPromptTemplate="""
+CriticPromptTemplate = """
 Role: Principal Systems Architect (Quality Assurance)
 
 Review the HLD JSON to identify specific architectural failures. Use a "First, do no harm" approach.
@@ -411,13 +385,9 @@ Output JSON Structure:
 """
 
 
-
-
-
-
 #######################################################################################################
 ## for Diagrammer####################################################################################
-#======================================================================================================
+# ======================================================================================================
 
 
 # DiagrammerPromptTemplate=ChatPromptTemplate.from_template("""
@@ -487,7 +457,7 @@ Output JSON Structure:
 
 # )
 
-DiagrammerPromptTemplate=ChatPromptTemplate.from_template("""
+DiagrammerPromptTemplate = ChatPromptTemplate.from_template("""
 
 You are an expert in system architecture visualization using Mermaid flowcharts.
 Generate a valid Mermaid FLOWCHART diagram based on the Architecture JSON.

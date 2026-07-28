@@ -1,55 +1,48 @@
-from typing import TypedDict
-from langgraph.graph import StateGraph, START,END
+from __future__ import annotations
+
+from functools import lru_cache
 from pathlib import Path
+from typing import Any, TypedDict
+
+from langgraph.graph import END, START, StateGraph
+
+from src.agents.requirementsClassifier import RequirementsRAG
 from src.utils.models import RequirementModel
 from src.utils.prompts import RequirementsQuery
-from src.agents.requirementsClassifier import RequirementsRAG
+
+RAW_DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "raw"
 
 
-ROOT_DIR = Path(__file__).resolve().parents[3]
-DATA_DIR = ROOT_DIR / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-
-class RequirementsState(TypedDict):
-    """Requirements State"""
-    vectorstore_path: str
+class RequirementsState(TypedDict, total=False):
+    user_input: str
+    model: RequirementsRAG
     output_model: RequirementModel
-    file_name:str
-    user_input:str
-    model:RequirementsRAG
 
 
-
-def _init(state: RequirementsState):
-    state['model']=RequirementsRAG(
+@lru_cache(maxsize=1)
+def _model() -> RequirementsRAG:
+    return RequirementsRAG(
         raw_data_dir=RAW_DATA_DIR,
-        vectorstore_path="../../data/db/faiss_index_requirements_x",
+        vectorstore_path="",
         requirement_model=RequirementModel,
         requirements_prompt=RequirementsQuery,
     )
-    return state
 
-def generate(state: RequirementsState)->RequirementsState:
-    output=state['model'].generate_requirements(state['user_input'])
-    state['output_model']=output
-    return state
 
-def requirementBuilder():
-    workflow=StateGraph(RequirementsState)
-    workflow.add_node("init",_init)
-    workflow.add_node("generate",generate)
+def initialize(state: RequirementsState) -> dict[str, Any]:
+    del state
+    return {"model": _model()}
 
-    workflow.add_edge(START,"init")
-    workflow.add_edge("init","generate")
-    workflow.add_edge("generate",END)
+
+def generate(state: RequirementsState) -> dict[str, Any]:
+    return {"output_model": state["model"].generate_requirements(state["user_input"])}
+
+
+def requirementBuilder() -> Any:
+    workflow = StateGraph(RequirementsState)
+    workflow.add_node("initialize", initialize)
+    workflow.add_node("generate", generate)
+    workflow.add_edge(START, "initialize")
+    workflow.add_edge("initialize", "generate")
+    workflow.add_edge("generate", END)
     return workflow.compile()
-
-
-# intial_state:RequirementsState={
-#     "user_input":"i want to create a social media application, with feeds, posts, likes and messages and payment system integrated!"
-# }
-
-# graph=requirementBuilder()
-# final_state=graph.invoke(intial_state)
-
-# print(final_state['output_model'])

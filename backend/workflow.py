@@ -9,7 +9,9 @@ class RequirementsAgent(Protocol):
 
 
 class DesignAgent(Protocol):
-    def run(self, requirements: dict[str, Any], feedback: dict[str, Any] | None) -> dict[str, Any]: ...
+    def run(
+        self, requirements: dict[str, Any], feedback: dict[str, Any] | None
+    ) -> dict[str, Any]: ...
 
 
 class CriticAgent(Protocol):
@@ -41,7 +43,9 @@ class CritiqueLoop:
         for _ in range(self.max_iterations):
             design = self.designer.run(requirements, review)
             review = self.critic.run(design)
-        return CritiqueResult(design=design, final_review=review or {}, iterations=self.max_iterations)
+        return CritiqueResult(
+            design=design, final_review=review or {}, iterations=self.max_iterations
+        )
 
 
 @dataclass(frozen=True)
@@ -53,7 +57,9 @@ class PipelineResult:
 
 
 class Pipeline:
-    def __init__(self, requirements: RequirementsAgent, design_loop: CritiqueLoop, diagram: DiagramAgent) -> None:
+    def __init__(
+        self, requirements: RequirementsAgent, design_loop: CritiqueLoop, diagram: DiagramAgent
+    ) -> None:
         self.requirements = requirements
         self.design_loop = design_loop
         self.diagram = diagram

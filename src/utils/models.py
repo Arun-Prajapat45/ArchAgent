@@ -1,101 +1,112 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from __future__ import annotations
 
+from typing import Any
 
-##########################################################################
-### for requirements Classifier #########################################
-#########################################################################
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 
 class RequirementModel(BaseModel):
     class Identification(BaseModel):
-        archetype: str = Field(description="The architectural pattern (e.g., API gateway–centric)")
-        knowledge_references: List[str] = Field(description="List of domain references")
+        archetype: str
+        knowledge_references: list[str]
 
     class Strategic8Metrics(BaseModel):
         class Users(BaseModel):
-            persona: str = Field(description="Types of users")
-            count: str = Field(description="Volume of users")
+            persona: str
+            count: str
 
         class IOContract(BaseModel):
-            input: List[str] = Field(description="Inputs required by the system")
-            output: List[str] = Field(description="Outputs produced by the system")
+            input: list[str]
+            output: list[str]
 
         class DataLoad(BaseModel):
-            daily_ingestion: str = Field(description="Daily data volume")
-            total_storage_5yr: str = Field(description="5-year projected storage")
+            daily_ingestion: str
+            total_storage_5yr: str
 
         class Throughput(BaseModel):
-            avg_rps: int = Field(description="Average Requests Per Second")
-            peak_rps: int = Field(description="Peak Requests Per Second")
+            avg_rps: int = Field(ge=0)
+            peak_rps: int = Field(ge=0)
+
+            @model_validator(mode="after")
+            def validate_peak(self) -> RequirementModel.Strategic8Metrics.Throughput:
+                if self.peak_rps < self.avg_rps:
+                    raise ValueError("peak_rps must be greater than or equal to avg_rps")
+                return self
 
         class SLASLO(BaseModel):
-            availability: str = Field(description="Uptime SLA")
-            latency_p99: str = Field(description="P99 Latency SLO")
+            availability: str
+            latency_p99: str
 
         users: Users
-        core_action: str = Field(description="The primary action/usage pattern")
+        core_action: str
         io_contract: IOContract
         data_load: DataLoad
         throughput: Throughput
-        read_write_ratio: str = Field(description="The R:W ratio string")
-        consistency_model: str = Field(description="Consistency type")
+        read_write_ratio: str
+        consistency_model: str
         sla_slo: SLASLO
 
     class RequirementsSummary(BaseModel):
-        functional: List[str] = Field(description="Top essential features")
-        non_functional: List[str] = Field(description="Top system constraints")
+        functional: list[str] = Field(min_length=1)
+        non_functional: list[str] = Field(min_length=1)
 
     identification: Identification
     strategic_8_metrics: Strategic8Metrics
     requirements_summary: RequirementsSummary
-    technical_taxonomy: List[str] = Field(description="Technical tags and technologies")
-
-
-
-
-
-###############################################################################
-## for hld engine ##################
-###############################################################################
-
-
+    technical_taxonomy: list[str]
 
 
 class SystemArchitectureStyle(BaseModel):
     pattern: str
     rationale: str
 
+
 class CommunicationStrategy(BaseModel):
     internal_comms: str
     async_logic: str
+
 
 class DeploymentStrategy(BaseModel):
     infrastructure: str
     orchestration: str
 
+
 class DataManagement(BaseModel):
     partitioning: str
     consistency_guarantees: str
+
 
 class TechStackComponent(BaseModel):
     component: str
     technology: str
     rationale: str
 
+
 class RequestFlow(BaseModel):
-    write_request_1: Optional[List[str]] = None
-    read_request_1: Optional[List[str]] = None
-    # Add more request types as needed
+    model_config = ConfigDict(extra="allow")
+
+    write_request_1: list[str] | None = None
+    read_request_1: list[str] | None = None
+
 
 class SLOEngineering(BaseModel):
     latency_strategy: str
     throughput_strategy: str
     security_compliance: str
 
+
 class ConnectivityMatrix(BaseModel):
     source: str
     intermediary: str
     destination: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_three_item_edge(cls, value: Any) -> Any:
+        if isinstance(value, list) and len(value) == 3:
+            return {"source": value[0], "intermediary": value[1], "destination": value[2]}
+        return value
+
 
 class SystemDesignSchema(BaseModel):
     system_name: str
@@ -104,22 +115,16 @@ class SystemDesignSchema(BaseModel):
     deployment_strategy: DeploymentStrategy
     data_management: DataManagement
     processed_information: str
-    tech_stack: List[TechStackComponent]
+    tech_stack: list[TechStackComponent]
     request_flows: RequestFlow
     slo_engineering: SLOEngineering
-    connectivity_matrices: List[ConnectivityMatrix]
-
-
-
-#################################################################################
-### hld critic ##################################################################
-##################################################################################
+    connectivity_matrices: list[ConnectivityMatrix]
 
 
 class CriticReview(BaseModel):
-    data_integrity: List[str] = Field(default_factory=list, description="Review of consistency model appropriateness for core actions")
-    flow_logic: List[str] = Field(default_factory=list, description="Analysis of component alignment between request_flows and tech_stack")
-    infrastructure: List[str] = Field(default_factory=list, description="Assessment of deployment_strategy supporting throughput requirements")
-    security: List[str] = Field(default_factory=list, description="Security risk analysis at critical points and nodes")
-    bottlenecks_chokepoints: List[str] = Field(default_factory=list, description="Identification of potential data flow bottlenecks")
-    summary: str = Field(description="Overall architectural assessment and recommendations")
+    data_integrity: list[str] = Field(default_factory=list)
+    flow_logic: list[str] = Field(default_factory=list)
+    infrastructure: list[str] = Field(default_factory=list)
+    security: list[str] = Field(default_factory=list)
+    bottlenecks_chokepoints: list[str] = Field(default_factory=list)
+    summary: str

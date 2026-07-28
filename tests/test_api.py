@@ -40,7 +40,9 @@ def test_health_and_readiness_endpoints() -> None:
 
 
 def test_missing_required_key_fails_readiness_and_chat() -> None:
-    client = TestClient(create_app(settings(openrouter_api_key=None), FakeArchitecture(), FakePricing()))
+    client = TestClient(
+        create_app(settings(openrouter_api_key=None), FakeArchitecture(), FakePricing())
+    )
     assert client.get("/ready").status_code == 503
     response = client.post("/chat", json={"user_input": "Build chat"})
     assert response.status_code == 503
@@ -67,7 +69,12 @@ def test_prompt_size_is_bounded() -> None:
 
 def test_cors_is_restricted() -> None:
     client = TestClient(create_app(settings(), FakeArchitecture(), FakePricing()))
-    allowed = client.options("/chat", headers={"Origin": "http://localhost:8501", "Access-Control-Request-Method": "POST"})
-    denied = client.options("/chat", headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"})
+    allowed = client.options(
+        "/chat",
+        headers={"Origin": "http://localhost:8501", "Access-Control-Request-Method": "POST"},
+    )
+    denied = client.options(
+        "/chat", headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"}
+    )
     assert allowed.headers.get("access-control-allow-origin") == "http://localhost:8501"
     assert denied.headers.get("access-control-allow-origin") is None
