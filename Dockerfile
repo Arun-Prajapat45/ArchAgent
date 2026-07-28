@@ -1,41 +1,30 @@
-# ---- Base image ----
-FROM python:3.12-slim
+FROM python@sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7 AS builder
 
-# ---- Environment settings ----
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PIP_NO_CACHE_DIR=1
-
-# ---- System dependencies ----
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    git \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 WORKDIR /app
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --requirement requirements.txt
 
-RUN pip install --upgrade pip setuptools wheel
+FROM python@sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7 AS runtime
 
-# ---- Core Python packages ----
-RUN pip install \
-    python-dotenv \
-    pydantic \
-    requests \
-    tiktoken \
-    langchain \
-    langchain-core \
-    langchain-community \
-    langgraph \
-    fastapi \
-    uvicorn \
-    psycopg[binary] \
-    psycopg-pool \
-    fastapi[standard] \
-    faiss-cpu \
-    langchain-openai  
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
 
-COPY . .
+RUN groupadd --system archagent && useradd --system --gid archagent --home /app archagent
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=archagent:archagent backend backend
+COPY --chown=archagent:archagent src src
+COPY --chown=archagent:archagent data data
+COPY --chown=archagent:archagent ui ui
 
-CMD ["fastapi", "dev", "backend/app.py", "--host", "0.0.0.0", "--port", "8000"]
+USER archagent
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+
+CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers"]
