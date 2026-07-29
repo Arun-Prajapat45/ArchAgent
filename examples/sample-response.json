@@ -1,0 +1,10 @@
+{
+  "request_id": "example-request-id",
+  "thread_id": "example-thread-id",
+  "output_requirements": "# Requirements\n\n- Upload and version documents\n- Search content and metadata\n- Enforce tenant-scoped role-based access\n- Record immutable audit events\n- Target 99.9% monthly availability",
+  "output_design": "# TenantDocs\n\nComponents: API gateway, document service, search index, object storage, and audit stream. This is an illustrative checked-in fixture, not a live model result.",
+  "output_code": "flowchart LR\n  Client[Web Client] --> API[FastAPI]\n  API --> Docs[Document Service]\n  Docs --> Store[(Object Storage)]\n  Docs --> Search[(Search Index)]\n  Docs --> Audit[Audit Stream]",
+  "critique_iterations": 2,
+  "estimated_monthly_cost_usd": null,
+  "cost_breakdown": []
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ecommerce",
+    "product_type": "E-commerce application",
+    "prompt": "Design a multi-region e-commerce platform for 100,000 daily active users with catalog search, carts, checkout, inventory reservations, and order tracking.",
+    "required_sections": ["requirements", "design", "mermaid"]
+  },
+  {
+    "id": "realtime-chat",
+    "product_type": "Real-time chat platform",
+    "prompt": "Design a real-time team chat platform with channels, presence, typing indicators, attachments, message history, and 50,000 concurrent connections.",
+    "required_sections": ["requirements", "design", "mermaid"]
+  },
+  {
+    "id": "document-management",
+    "product_type": "Document-management system",
+    "prompt": "Design a secure document-management system with versioning, full-text search, access controls, audit logs, and retention policies.",
+    "required_sections": ["requirements", "design", "mermaid"]
+  },
+  {
+    "id": "ai-support-agent",
+    "product_type": "AI support agent",
+    "prompt": "Design an AI customer-support agent using RAG, ticket escalation, citations, feedback capture, and tenant-isolated knowledge bases.",
+    "required_sections": ["requirements", "design", "mermaid"]
+  },
+  {
+    "id": "analytics-dashboard",
+    "product_type": "Analytics dashboard",
+    "prompt": "Design a near-real-time analytics dashboard ingesting 20 million events per day with filters, saved views, exports, and role-based access.",
+    "required_sections": ["requirements", "design", "mermaid"]
+  },
+  {
+    "id": "multi-tenant-saas",
+    "product_type": "Multi-tenant SaaS application",
+    "prompt": "Design a multi-tenant project-management SaaS with tenant isolation, billing, webhooks, audit trails, and regional data residency.",
+    "required_sections": ["requirements", "design", "mermaid"]
+  }
+]
