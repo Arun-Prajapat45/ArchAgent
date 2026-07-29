@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T11:22:36.246977+00:00",
+  "generated_at": "2026-07-29T12:06:20.309477+00:00",
   "mode": "offline deterministic contract fixture",
   "live_model_calls": 0,
   "paid_api_cost_usd": 0,
@@ -7,7 +7,7 @@
   "schema_valid_rate": 1.0,
   "mermaid_valid_rate": 1.0,
   "required_section_coverage": 1.0,
-  "elapsed_ms": 0.115,
+  "elapsed_ms": 0.142,
   "results": [
     {
       "id": "ecommerce",

@@ -35,7 +35,7 @@ jobs:
       - name: Run offline tests
         run: python -m pytest
       - name: Run offline evaluation contract
-        run: python evaluation/run_offline.py
+        run: python -m evaluation.run_offline
 
   security:
     name: Dependency, code, and secret scans

@@ -194,7 +194,7 @@ The evaluation corpus includes six product types: e-commerce, real-time chat, do
 Run the zero-cost contract evaluation:
 
 ```bash
-python evaluation/run_offline.py
+python -m evaluation.run_offline
 ```
 
 Current checked-in result: **6/6 schema-valid, 6/6 Mermaid-valid, and 100% required-section coverage** in deterministic fixture mode. This validates contracts and evaluation plumbing only. It performs zero live model calls and must not be interpreted as a model-quality, latency, consistency, or cost benchmark. See [`evaluation/results/offline-contract.json`](evaluation/results/offline-contract.json).
