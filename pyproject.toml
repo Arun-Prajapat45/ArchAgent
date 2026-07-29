@@ -46,6 +46,7 @@ include = ["backend*", "src*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --disable-warnings --strict-markers"
+pythonpath = ["."]
 markers = ["external: tests requiring paid/network services (excluded by default)"]
 
 [tool.ruff]

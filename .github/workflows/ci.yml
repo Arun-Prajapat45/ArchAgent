@@ -33,7 +33,7 @@ jobs:
       - name: Typecheck
         run: mypy backend
       - name: Run offline tests
-        run: pytest
+        run: python -m pytest
       - name: Run offline evaluation contract
         run: python evaluation/run_offline.py
 
