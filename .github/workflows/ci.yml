@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Format, lint, typecheck, and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install pinned development dependencies
+        run: python -m pip install --requirement requirements-dev.txt
+      - name: Check formatting
+        run: ruff format --check backend src ui tests evaluation
+      - name: Lint
+        run: ruff check backend src ui tests evaluation
+      - name: Typecheck
+        run: mypy backend
+      - name: Run offline tests
+        run: pytest
+      - name: Run offline evaluation contract
+        run: python evaluation/run_offline.py
+
+  security:
+    name: Dependency, code, and secret scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install pinned development dependencies
+        run: python -m pip install --requirement requirements-dev.txt
+      - name: Audit Python dependencies
+        run: python -m pip_audit --requirement requirements.txt
+      - name: Scan Python source
+        run: python -m bandit -q -r backend src
+      - name: Scan Git history for secrets
+        run: >-
+          docker run --rm
+          -v "$PWD:/repo"
+          zricethezav/gitleaks:v8.28.0
+          detect --source=/repo --config=/repo/.gitleaks.toml --redact
+
+  docker:
+    name: Reproducible Docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build --tag archagent:ci .
